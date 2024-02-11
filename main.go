@@ -2,6 +2,8 @@ package main
 
 import (
 	"log"
+	"math"
+	"math/rand"
 	"runtime"
 	"unsafe"
 
@@ -28,7 +30,7 @@ func glfw_setup() *glfw.Window {
 	glfw.WindowHint(glfw.ContextVersionMajor, 2)
 	glfw.WindowHint(glfw.ContextVersionMinor, 1)
 
-	window, err := glfw.CreateWindow(width, height, "Chaos", nil, nil)
+	window, err := glfw.CreateWindow(width, height, "Gravity", nil, nil)
 	if err != nil {
 		log.Fatalln("failed to create window:", err)
 	}
@@ -81,7 +83,7 @@ func (t *Trail) Draw() {
 	gl.Begin(gl.LINE_STRIP)
 
 	for i := 0; i < len(t.Curve); i++ {
-		fade := float64(i) / float64(len(t.Curve))
+		fade := float64(i) / float64(t.Length)
 		gl.Color4f(t.Color[0], t.Color[1], t.Color[2], float32(fade))
 		gl.Vertex3f(t.Curve[i][0], t.Curve[i][1], t.Curve[i][2])
 	}
@@ -96,10 +98,11 @@ func main() {
 	scene_setup()
 
 	var colors []mgl32.Vec3
+	var radii []float64
 	var s Simulation
 	s.Time = 10000.0
 	s.Scale = 0.0000000005
-	s.Points, colors = constructSystem("solar_system.toml")
+	s.Points, colors, radii = constructSystem("solar_system.toml")
 
 	trails := make([]Trail, len(s.Points))
 	for i := range trails {
@@ -112,10 +115,23 @@ func main() {
 
 	var c Controls
 	c.Window = *window
-	c.P.Orientation = mgl64.Vec3{0, 0, 0}
+	c.P.Orientation = mgl64.Vec3{0, math.Pi, 0}
 	c.P.Position = mgl64.Vec3{0, 0, 0}
 	c.Inertia = mgl64.Vec3{0, 0, 0}
 	c.Setup()
+
+	tetra := Tetraheadron()
+	tetra.Colors = []mgl32.Vec3{
+		{rand.Float32(), rand.Float32(), rand.Float32()},
+		{rand.Float32(), rand.Float32(), rand.Float32()},
+		{rand.Float32(), rand.Float32(), rand.Float32()},
+		{rand.Float32(), rand.Float32(), rand.Float32()},
+	}
+	for i := 0; i < 5; i++ {
+		tetra.Enhance()
+		tetra.PuffUp(20)
+	}
+	tetra.PuffUp(20)
 
 	for !window.ShouldClose() {
 		// static behaviour
@@ -131,11 +147,20 @@ func main() {
 		gl.LoadMatrixd((*float64)(unsafe.Pointer(&m)))
 
 		for i := 0; i < len(trails); i++ {
+			t := s.Points[i].Position.Mul(s.Scale)
+			r := radii[i] * s.Scale
+			gl.Translated(t[0], t[1], t[2])
+			gl.Scaled(r, r, r)
+			tetra.Draw()
+			r = 1 / r
+			gl.Scaled(r, r, r)
+			gl.Translated(-t[0], -t[1], -t[2])
+
 			trails[i].Draw()
 		}
 
-		draw_fadenkreuz(&c.P, 20.0)
-		fillVoid()
+		draw_fadenkreuz(&c.P, 1.0)
+		// fillVoid()
 		window.SwapBuffers()
 	}
 }
@@ -160,14 +185,15 @@ func fillVoid() {
 }
 
 func draw_fadenkreuz(p *Pov, d float64) {
+	gl.LineWidth(1)
 	gl.Begin(gl.LINES)
 
 	var c [4]float32
 	gl.Color4f(1.0, 0.0, 0.0, 1.0)
 
-	p.FreeMove(mgl64.Vec3{0, 0, -2 * d})
+	p.FreeMove(mgl64.Vec3{0, 0, 5 * d})
 	base := p.Position
-	p.FreeMove(mgl64.Vec3{0, 0, 2 * d})
+	p.FreeMove(mgl64.Vec3{0, 0, -5 * d})
 
 	for i := 0; i < 3; i++ {
 		c = [4]float32{0.0, 0.0, 0.0, 1.0}

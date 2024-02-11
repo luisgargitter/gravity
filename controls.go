@@ -23,6 +23,8 @@ func (p *Pov) FPSLook(delta mgl64.Vec2) {
 }
 
 func (p *Pov) FreeMove(delta mgl64.Vec3) {
+	delta[2] = -delta[2] // OpenGL uses a right hand coordinate system.
+	// To associate +z with forward movement we need to invert it.
 	q := mgl64.AnglesToQuat(p.Orientation[2], p.Orientation[1], p.Orientation[0], mgl64.ZYX)
 	p.Position = p.Position.Add(q.Rotate(delta))
 }
@@ -79,10 +81,10 @@ func (c *Controls) Handle(s *Simulation) {
 	if ss == glfw.Press {
 		c.Inertia[2] -= 0.01
 	}
-	if sa == glfw.Press {
+	if sd == glfw.Press {
 		c.Inertia[0] += 0.01
 	}
-	if sd == glfw.Press {
+	if sa == glfw.Press {
 		c.Inertia[0] -= 0.01
 	}
 	if up == glfw.Press {
@@ -97,12 +99,14 @@ func (c *Controls) Handle(s *Simulation) {
 
 	if lock == glfw.Press {
 		c.P.FreeMove(c.Inertia)
+		c.P.Position = c.P.Position.Add(s.Points[3].Inertia.Mul(s.Time * s.Scale))
+
 		t := c.P.Position.Sub(s.Points[3].Position.Mul(s.Scale))
 		_, theta, phi := mgl64.CartesianToSpherical(mgl64.Vec3{t[0], t[2], t[1]})
-		c.P.Orientation = mgl64.Vec3{-theta + math.Pi/2, phi - math.Pi/2, 0}
-		c.P.Position = c.P.Position.Add(s.Points[3].Inertia.Mul(s.Time * s.Scale))
+
+		c.P.Orientation = mgl64.Vec3{theta - math.Pi/2, -phi + math.Pi/2, 0}
 	} else {
-		c.P.FreeMove(c.Inertia)
+		c.P.FPSMove(c.Inertia)
 		c.P.FPSLook(c.Mouse.Sub(mouse).Mul(mouse_sensi))
 	}
 
