@@ -59,8 +59,8 @@ func (m *Mesh) Enhance() {
 			if adj[a][b] == -1 {
 				adj[a][b] = len(m.Points)
 				m.Points = append(m.Points, lerp64(m.Points[a], m.Points[b], 0.5))
-				m.Colors = append(m.Colors, mgl32.Vec3{rand.Float32(), rand.Float32(), rand.Float32()})
 				//m.Colors = append(m.Colors, lerp32(m.Colors[a], m.Colors[b], 0.5))
+				m.Colors = append(m.Colors, mgl32.Vec3{rand.Float32(), rand.Float32(), rand.Float32()})
 			}
 			m.Faces[i][j] = adj[a][b]
 		}
@@ -94,5 +94,34 @@ func Tetraheadron() Mesh {
 		{1, 2, 3},
 	}
 
+	return r
+}
+
+func Cube() Mesh {
+	var r Mesh
+	r.Points = []mgl64.Vec3{
+		{-1, -1, -1},
+		{-1, -1, 1},
+		{-1, 1, -1},
+		{-1, 1, 1},
+		{1, -1, -1},
+		{1, -1, 1},
+		{1, 1, -1},
+		{1, 1, 1},
+	}
+	r.Faces = []Surface{
+		{0, 1, 2},
+		{0, 1, 4},
+		{0, 2, 4},
+		{3, 7, 2},
+		{3, 7, 1},
+		{3, 2, 1},
+		{5, 1, 7},
+		{5, 1, 4},
+		{5, 4, 7},
+		{6, 2, 4},
+		{6, 2, 7},
+		{6, 4, 7},
+	}
 	return r
 }

@@ -101,7 +101,7 @@ func main() {
 	var radii []float64
 	var s Simulation
 	s.Time = 10000.0
-	s.Scale = 0.0000000005
+	s.Scale = 0.000000005
 	s.Points, colors, radii = constructSystem("solar_system.toml")
 
 	trails := make([]Trail, len(s.Points))
@@ -120,18 +120,22 @@ func main() {
 	c.Inertia = mgl64.Vec3{0, 0, 0}
 	c.Setup()
 
-	tetra := Tetraheadron()
-	tetra.Colors = []mgl32.Vec3{
+	cube := Cube()
+	cube.Colors = []mgl32.Vec3{
+		{rand.Float32(), rand.Float32(), rand.Float32()},
+		{rand.Float32(), rand.Float32(), rand.Float32()},
+		{rand.Float32(), rand.Float32(), rand.Float32()},
+		{rand.Float32(), rand.Float32(), rand.Float32()},
 		{rand.Float32(), rand.Float32(), rand.Float32()},
 		{rand.Float32(), rand.Float32(), rand.Float32()},
 		{rand.Float32(), rand.Float32(), rand.Float32()},
 		{rand.Float32(), rand.Float32(), rand.Float32()},
 	}
-	for i := 0; i < 5; i++ {
-		tetra.Enhance()
-		tetra.PuffUp(20)
+
+	for i := 0; i < 4; i++ {
+		cube.Enhance()
 	}
-	tetra.PuffUp(20)
+	cube.PuffUp(1)
 
 	for !window.ShouldClose() {
 		// static behaviour
@@ -151,7 +155,7 @@ func main() {
 			r := radii[i] * s.Scale
 			gl.Translated(t[0], t[1], t[2])
 			gl.Scaled(r, r, r)
-			tetra.Draw()
+			cube.Draw()
 			r = 1 / r
 			gl.Scaled(r, r, r)
 			gl.Translated(-t[0], -t[1], -t[2])
