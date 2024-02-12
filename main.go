@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"math"
 	"math/rand"
@@ -54,7 +55,7 @@ func scene_setup() {
 	gl.MatrixMode(gl.PROJECTION)
 	gl.LoadIdentity()
 	f := float64(width)/height - 1
-	gl.Frustum(-1-f, 1+f, -1, 1, 1.0, 1000000.0)
+	gl.Frustum(-1-f, 1+f, -1, 1, 1.0, 1.0e12)
 	gl.MatrixMode(gl.MODELVIEW)
 	gl.LoadIdentity()
 
@@ -132,10 +133,21 @@ func main() {
 		{rand.Float32(), rand.Float32(), rand.Float32()},
 	}
 
-	for i := 0; i < 4; i++ {
+	for i := 0; i < 3; i++ {
 		cube.Enhance()
 	}
 	cube.PuffUp(1)
+	avgStarDis := 9.461e+18
+
+	var stars []mgl32.Vec3
+	for i := 0; i < 1000; i++ {
+		stars = append(stars, mgl32.SphericalToCartesian(
+			rand.Float32()*float32(avgStarDis*s.Scale),
+			float32(math.Asin(2*rand.Float64()-1)+math.Pi/2),
+			rand.Float32()*float32(2*math.Pi),
+		))
+	}
+	fmt.Println(stars[0])
 
 	for !window.ShouldClose() {
 		// static behaviour
@@ -149,12 +161,18 @@ func main() {
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 		gl.MatrixMode(gl.MODELVIEW)
 		gl.LoadMatrixd((*float64)(unsafe.Pointer(&m)))
+		//gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE) // wireframe
+		gl.PolygonMode(gl.FRONT, gl.FILL)
 
 		for i := 0; i < len(trails); i++ {
 			t := s.Points[i].Position.Mul(s.Scale)
 			r := radii[i] * s.Scale
 			gl.Translated(t[0], t[1], t[2])
 			gl.Scaled(r, r, r)
+			tc := trails[i].Color
+			for j := range cube.Colors {
+				cube.Colors[j] = tc
+			}
 			cube.Draw()
 			r = 1 / r
 			gl.Scaled(r, r, r)
@@ -162,6 +180,13 @@ func main() {
 
 			trails[i].Draw()
 		}
+
+		gl.Begin(gl.POINTS)
+		gl.Color4f(1, 1, 1, 1)
+		for _, s := range stars {
+			gl.Vertex3f(s[0], s[1], s[2])
+		}
+		gl.End()
 
 		draw_fadenkreuz(&c.P, 1.0)
 		// fillVoid()

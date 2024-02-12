@@ -1,8 +1,6 @@
 package main
 
 import (
-	"math/rand"
-
 	"github.com/go-gl/gl/v2.1/gl"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
@@ -59,8 +57,8 @@ func (m *Mesh) Enhance() {
 			if adj[a][b] == -1 {
 				adj[a][b] = len(m.Points)
 				m.Points = append(m.Points, lerp64(m.Points[a], m.Points[b], 0.5))
-				//m.Colors = append(m.Colors, lerp32(m.Colors[a], m.Colors[b], 0.5))
-				m.Colors = append(m.Colors, mgl32.Vec3{rand.Float32(), rand.Float32(), rand.Float32()})
+				m.Colors = append(m.Colors, lerp32(m.Colors[a], m.Colors[b], 0.5))
+				//m.Colors = append(m.Colors, mgl32.Vec3{rand.Float32(), rand.Float32(), rand.Float32()})
 			}
 			m.Faces[i][j] = adj[a][b]
 		}

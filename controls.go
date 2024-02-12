@@ -110,7 +110,7 @@ func (c *Controls) Handle(s *Simulation) {
 		c.P.FPSLook(c.Mouse.Sub(mouse).Mul(mouse_sensi))
 	}
 
-	c.Inertia = c.Inertia.Mul(0.95) // for smooth movement (Kondensator-Ladekurve)
+	c.Inertia = c.Inertia.Mul(0.99) // for smooth movement (Kondensator-Ladekurve)
 	c.Mouse = mouse
 
 	fmt.Printf("\rPosition: (%.2f, %.2f, %.2f) Orientation: (%.2f, %.2f, %.2f)",

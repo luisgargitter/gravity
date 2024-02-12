@@ -1,6 +1,6 @@
 [[bodies]]
 name = "sun"
-color = [1, 1, 1]
+color = [1, 1, 0]
 distance = 0.0
 speed = 0.0
 mass = 1.9891e30

@@ -21,16 +21,16 @@ type Config struct {
 	Bodies []Celestialbody
 }
 
-func constructSystem(filepath string) ([]PointMass, []mgl32.Vec3, []float64) {
+func constructSystem(filepath string) ([]Particle, []mgl32.Vec3, []float64) {
 	var c Config
 	if _, err := toml.DecodeFile(filepath, &c); err != nil {
 		log.Fatal(err)
 	}
-	var rp []PointMass
+	var rp []Particle
 	var rc []mgl32.Vec3
 	var rr []float64
 	for _, b := range c.Bodies {
-		t := PointMass{mgl64.Vec3{b.Distance, 0, 0}, mgl64.Vec3{0, 0, b.Speed}, b.Mass}
+		t := Particle{mgl64.Vec3{b.Distance, 0, 0}, mgl64.Vec3{0, 0, b.Speed}, b.Mass, 0}
 		rp = append(rp, t)
 		rc = append(rc, mgl32.Vec3{b.Color[0], b.Color[1], b.Color[2]})
 		rr = append(rr, b.Diameter/2)
