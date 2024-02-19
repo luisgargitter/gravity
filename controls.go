@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"math"
 
@@ -44,10 +43,12 @@ func (p *Pov) FPSMove(delta mgl64.Vec3) {
 }
 
 type Controls struct {
-	Window  glfw.Window
-	Mouse   mgl64.Vec2
-	P       Pov
-	Inertia mgl64.Vec3
+	Window       glfw.Window
+	Mouse        mgl64.Vec2
+	P            Pov
+	Inertia      mgl64.Vec3
+	Acceleration float64
+	Resistance   float64
 }
 
 func (c *Controls) Setup() {
@@ -76,29 +77,29 @@ func (c *Controls) Handle(s *Simulation) {
 	lock := c.Window.GetKey(glfw.KeyTab)
 
 	if sw == glfw.Press {
-		c.Inertia[2] += 0.01
+		c.Inertia[2] += c.Acceleration
 	}
 	if ss == glfw.Press {
-		c.Inertia[2] -= 0.01
+		c.Inertia[2] -= c.Acceleration
 	}
 	if sd == glfw.Press {
-		c.Inertia[0] += 0.01
+		c.Inertia[0] += c.Acceleration
 	}
 	if sa == glfw.Press {
-		c.Inertia[0] -= 0.01
+		c.Inertia[0] -= c.Acceleration
 	}
 	if up == glfw.Press {
-		c.Inertia[1] += 0.01
+		c.Inertia[1] += c.Acceleration
 	}
 	if down == glfw.Press {
-		c.Inertia[1] -= 0.01
+		c.Inertia[1] -= c.Acceleration
 	}
 	if q == glfw.Press {
 		c.Window.SetShouldClose(true)
 	}
 
 	if lock == glfw.Press {
-		c.P.FreeMove(c.Inertia)
+		c.P.FreeMove(c.Inertia.Mul(s.Scale))
 		c.P.Position = c.P.Position.Add(s.Points[3].Inertia.Mul(s.Time * s.Scale))
 
 		t := c.P.Position.Sub(s.Points[3].Position.Mul(s.Scale))
@@ -106,14 +107,10 @@ func (c *Controls) Handle(s *Simulation) {
 
 		c.P.Orientation = mgl64.Vec3{theta - math.Pi/2, -phi + math.Pi/2, 0}
 	} else {
-		c.P.FPSMove(c.Inertia)
+		c.P.FPSMove(c.Inertia.Mul(s.Scale))
 		c.P.FPSLook(c.Mouse.Sub(mouse).Mul(mouse_sensi))
 	}
 
-	c.Inertia = c.Inertia.Mul(0.99) // for smooth movement (Kondensator-Ladekurve)
+	c.Inertia = c.Inertia.Mul(c.Resistance) // for smooth movement (Kondensator-Ladekurve)
 	c.Mouse = mouse
-
-	fmt.Printf("\rPosition: (%.2f, %.2f, %.2f) Orientation: (%.2f, %.2f, %.2f)",
-		c.P.Position[0], c.P.Position[1], c.P.Position[2],
-		c.P.Orientation[0], c.P.Orientation[1], c.P.Orientation[2])
 }

@@ -7,31 +7,31 @@ mass = 1.9891e30
 diameter = 1.3927e9
 [[bodies]]
 name = "mercury"
-color = [1, 1, 1]
+color = [0.71, 0.72, 0.725]
 distance = 58e9
 speed = 47.9e3
 mass = 3.30e23
 diameter = 4.879e6
 [[bodies]]
 name = "venus"
-color = [1, 1, 1]
+color = [0.89, 0.73, 0.462]
 distance = 108e9
 speed = 35.0e3
 mass = 4.87e24
 diameter = 12.104e6
 [[bodies]]
 name = "earth"
-color = [0, 0, 1]
+color = [0.419, 0.576, 0.839]
 distance = 149.6e9
 speed = 29.8e3
 mass = 5.97e24
 diameter = 12.756e6
 [[bodies]]
 name = "moon"
-color = [0.8, 0.8, 0.8]
+color = [0.7, 0.7, 0.7]
 distance = 149.984e9
 speed = 30.8e3
-mass = 0.073e24
+mass = 7.3e22
 diameter = 3.475e6
 [[bodies]]
 name = "mars"
@@ -42,7 +42,7 @@ mass = 6.42e23
 diameter = 6.792e6
 [[bodies]]
 name = "jupyter"
-color = [1, 1, 1]
+color = [0.58, 0.41, 0.33]
 distance = 778e9
 speed = 13.1e3
 mass = 1.90e27

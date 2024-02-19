@@ -119,6 +119,8 @@ func main() {
 	c.P.Orientation = mgl64.Vec3{0, math.Pi, 0}
 	c.P.Position = mgl64.Vec3{0, 0, 0}
 	c.Inertia = mgl64.Vec3{0, 0, 0}
+	c.Acceleration = 1000000.0
+	c.Resistance = 0.95
 	c.Setup()
 
 	cube := Cube()
@@ -133,10 +135,14 @@ func main() {
 		{rand.Float32(), rand.Float32(), rand.Float32()},
 	}
 
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 4; i++ {
 		cube.Enhance()
 	}
 	cube.PuffUp(1)
+
+	var sphereBuffer uint32
+	gl.GenBuffers(1, &sphereBuffer)
+
 	avgStarDis := 9.461e+18
 
 	var stars []mgl32.Vec3
@@ -147,9 +153,9 @@ func main() {
 			rand.Float32()*float32(2*math.Pi),
 		))
 	}
-	fmt.Println(stars[0])
 
 	for !window.ShouldClose() {
+		cpuStart := glfw.GetTime()
 		// static behaviour
 		s.Step()
 		for i := range trails {
@@ -157,6 +163,9 @@ func main() {
 		}
 
 		c.Handle(&s)
+		cpuEnd := glfw.GetTime()
+		gpuStart := cpuEnd
+
 		m := c.P.Matrix()
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 		gl.MatrixMode(gl.MODELVIEW)
@@ -191,6 +200,14 @@ func main() {
 		draw_fadenkreuz(&c.P, 1.0)
 		// fillVoid()
 		window.SwapBuffers()
+		gpuEnd := glfw.GetTime()
+		cpuTime := (cpuEnd - cpuStart)
+		gpuTime := (gpuEnd - gpuStart)
+		fps := 1 / (cpuTime + gpuTime)
+		fmt.Printf("\rPosition: (%.2f, %.2f, %.2f) Orientation: (%.2f, %.2f, %.2f) CPU: %.2f ms, GPU: %.2f ms, FPS: %.2f ",
+			c.P.Position[0], c.P.Position[1], c.P.Position[2],
+			c.P.Orientation[0], c.P.Orientation[1], c.P.Orientation[2],
+			cpuTime*1000, gpuTime*1000, fps)
 	}
 }
 
