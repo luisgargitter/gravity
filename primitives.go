@@ -7,26 +7,44 @@ import (
 )
 
 type PointCloud []mgl64.Vec3
-type Surface [3]int
+type Surface [3]uint32
 
 type Mesh struct {
 	Points PointCloud
 	Colors []mgl32.Vec3
 	Faces  []Surface
+	VAO    uint32
 }
 
-func (m *Mesh) Draw() {
-	gl.Begin(gl.TRIANGLES)
+type Camera struct {
+	Projection  mgl64.Mat4
+	Position    mgl64.Vec3
+	Orientation mgl64.Vec3
+}
 
-	for _, f := range m.Faces {
-		for _, v := range f {
-			t := m.Points[v]
-			gl.Color4f(m.Colors[v][0], m.Colors[v][1], m.Colors[v][2], 1)
-			gl.Vertex3f(float32(t[0]), float32(t[1]), float32(t[2]))
-		}
+type Scene struct {
+	C  *Camera
+	Os []Object
+}
+
+type Object struct {
+	Transform mgl64.Mat4
+	M         *Mesh
+	VAO       uint32
+}
+
+func (s *Scene) Draw(viewUni int32) {
+	m := mgl64.Ident4() //s.C.ViewMatrix()
+	for _, o := range s.Os {
+		t := m.Mul4(o.Transform)
+		gl.UniformMatrix4dv(viewUni, 1, false, &t[0])
+		o.Draw()
 	}
+}
 
-	gl.End()
+func (o *Object) Draw() {
+	gl.BindVertexArray(o.VAO)
+	gl.DrawElements(gl.TRIANGLES, int32(len(o.M.Faces)*3), gl.UNSIGNED_INT, nil)
 }
 
 func lerp64(a, b mgl64.Vec3, t float64) mgl64.Vec3 {
@@ -60,7 +78,7 @@ func (m *Mesh) Enhance() {
 				m.Colors = append(m.Colors, lerp32(m.Colors[a], m.Colors[b], 0.5))
 				//m.Colors = append(m.Colors, mgl32.Vec3{rand.Float32(), rand.Float32(), rand.Float32()})
 			}
-			m.Faces[i][j] = adj[a][b]
+			m.Faces[i][j] = uint32(adj[a][b])
 		}
 		m.Faces = append(m.Faces,
 			Surface{f[0], m.Faces[i][0], m.Faces[i][2]},

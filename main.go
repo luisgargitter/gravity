@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"log"
 	"math"
-	"math/rand"
 	"runtime"
+	"strings"
 	"unsafe"
 
 	"github.com/go-gl/gl/v2.1/gl"
@@ -45,74 +45,13 @@ func glfw_setup() *glfw.Window {
 	return window
 }
 
-func scene_setup() {
-	gl.Enable(gl.DEPTH_TEST)
-
-	gl.ClearColor(0, 0, 0.0, 0.0)
-	gl.ClearDepth(1)
-	gl.DepthFunc(gl.LEQUAL)
-
-	gl.MatrixMode(gl.PROJECTION)
-	gl.LoadIdentity()
-	f := float64(width)/height - 1
-	gl.Frustum(-1-f, 1+f, -1, 1, 1.0, 1.0e12)
-	gl.MatrixMode(gl.MODELVIEW)
-	gl.LoadIdentity()
-
-	gl.Enable(gl.BLEND)
-	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-}
-
-type Trail struct {
-	Position *mgl64.Vec3
-	Length   int
-	Width    float32
-	Color    mgl32.Vec3
-	Curve    []mgl32.Vec3
-}
-
-func (t *Trail) Update(scale float64) {
-	p := (*t.Position).Mul(scale)
-	t.Curve = append(t.Curve, mgl32.Vec3{float32(p[0]), float32(p[1]), float32(p[2])})
-	if len(t.Curve) > t.Length {
-		t.Curve = t.Curve[1:]
-	}
-}
-
-func (t *Trail) Draw() {
-	gl.LineWidth(t.Width)
-	gl.Begin(gl.LINE_STRIP)
-
-	for i := 0; i < len(t.Curve); i++ {
-		fade := float64(i) / float64(t.Length)
-		gl.Color4f(t.Color[0], t.Color[1], t.Color[2], float32(fade))
-		gl.Vertex3f(t.Curve[i][0], t.Curve[i][1], t.Curve[i][2])
-	}
-
-	gl.End()
-}
-
 func main() {
 	window := glfw_setup()
 	defer glfw.Terminate()
 
-	scene_setup()
-
-	var colors []mgl32.Vec3
-	var radii []float64
 	var s Simulation
 	s.Time = 10000.0
 	s.Scale = 0.000000005
-	s.Points, colors, radii = constructSystem("solar_system.toml")
-
-	trails := make([]Trail, len(s.Points))
-	for i := range trails {
-		trails[i].Length = 200
-		trails[i].Width = 3
-		trails[i].Color = colors[i]
-		trails[i].Position = &s.Points[i].Position
-		trails[i].Update(s.Scale)
-	}
 
 	var c Controls
 	c.Window = *window
@@ -123,83 +62,75 @@ func main() {
 	c.Resistance = 0.95
 	c.Setup()
 
-	cube := Cube()
-	cube.Colors = []mgl32.Vec3{
-		{rand.Float32(), rand.Float32(), rand.Float32()},
-		{rand.Float32(), rand.Float32(), rand.Float32()},
-		{rand.Float32(), rand.Float32(), rand.Float32()},
-		{rand.Float32(), rand.Float32(), rand.Float32()},
-		{rand.Float32(), rand.Float32(), rand.Float32()},
-		{rand.Float32(), rand.Float32(), rand.Float32()},
-		{rand.Float32(), rand.Float32(), rand.Float32()},
-		{rand.Float32(), rand.Float32(), rand.Float32()},
+	//gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE) // wireframe
+	gl.PolygonMode(gl.FRONT, gl.FILL)
+
+	program, err := newProgram(vertexShader, fragmentShader)
+	if err != nil {
+		panic(err)
 	}
 
-	for i := 0; i < 4; i++ {
-		cube.Enhance()
+	triangle := Mesh{
+		PointCloud{{-0.5, -0.5, 0}, {0.5, -0.5, 0}, {0, 0.5, 0}},
+		[]mgl32.Vec3{{1, 1, 1}, {1, 1, 1}, {1, 1, 1}},
+		[]Surface{{0, 1, 2}},
+		0,
 	}
-	cube.PuffUp(1)
 
-	var sphereBuffer uint32
-	gl.GenBuffers(1, &sphereBuffer)
+	gl.UseProgram(program)
 
-	avgStarDis := 9.461e+18
+	viewU := gl.GetUniformLocation(program, gl.Str("view\x00"))
 
-	var stars []mgl32.Vec3
-	for i := 0; i < 1000; i++ {
-		stars = append(stars, mgl32.SphericalToCartesian(
-			rand.Float32()*float32(avgStarDis*s.Scale),
-			float32(math.Asin(2*rand.Float64()-1)+math.Pi/2),
-			rand.Float32()*float32(2*math.Pi),
-		))
-	}
+	projection := mgl64.Perspective(math.Pi/2, width/height, 0.1, 1.0e12)
+
+	var sphereVerts uint32
+	var sphereFaces uint32
+	gl.GenVertexArrays(1, &triangle.VAO)
+	gl.BindVertexArray(triangle.VAO)
+
+	gl.GenBuffers(1, &sphereVerts)
+	gl.BindBuffer(gl.ARRAY_BUFFER, sphereVerts)
+	gl.BufferData(
+		gl.ARRAY_BUFFER,
+		int(unsafe.Sizeof(triangle.Points[0]))*len(triangle.Points),
+		unsafe.Pointer(&triangle.Points[0]),
+		gl.STATIC_DRAW,
+	)
+
+	gl.GenBuffers(1, &sphereFaces)
+	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, sphereFaces)
+	gl.BufferData(
+		gl.ELEMENT_ARRAY_BUFFER,
+		int(unsafe.Sizeof(triangle.Faces[0]))*len(triangle.Faces),
+		unsafe.Pointer(&triangle.Faces[0]),
+		gl.STATIC_DRAW,
+	)
+	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, sphereFaces)
+	gl.VertexAttribPointer(0, 3, gl.DOUBLE, false, int32(unsafe.Sizeof(mgl64.Vec3{})), nil)
+	gl.EnableVertexAttribArray(0)
 
 	for !window.ShouldClose() {
 		cpuStart := glfw.GetTime()
 		// static behaviour
-		s.Step()
-		for i := range trails {
-			trails[i].Update(s.Scale)
-		}
-
 		c.Handle(&s)
+
+		view := projection.Mul4(c.P.Matrix())
+		gl.UniformMatrix4dv(viewU, 1, false, &view[0])
+
 		cpuEnd := glfw.GetTime()
 		gpuStart := cpuEnd
 
-		m := c.P.Matrix()
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-		gl.MatrixMode(gl.MODELVIEW)
-		gl.LoadMatrixd((*float64)(unsafe.Pointer(&m)))
-		//gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE) // wireframe
-		gl.PolygonMode(gl.FRONT, gl.FILL)
+		//gl.UseProgram(program)
 
-		for i := 0; i < len(trails); i++ {
-			t := s.Points[i].Position.Mul(s.Scale)
-			r := radii[i] * s.Scale
-			gl.Translated(t[0], t[1], t[2])
-			gl.Scaled(r, r, r)
-			tc := trails[i].Color
-			for j := range cube.Colors {
-				cube.Colors[j] = tc
-			}
-			cube.Draw()
-			r = 1 / r
-			gl.Scaled(r, r, r)
-			gl.Translated(-t[0], -t[1], -t[2])
+		//gl.UniformMatrix4dv(viewU, 1, false, &view[0])
 
-			trails[i].Draw()
-		}
+		gl.BindVertexArray(triangle.VAO)
+		gl.DrawElements(gl.TRIANGLES, int32(len(triangle.Faces))*3, gl.UNSIGNED_INT, nil)
+		gl.BindVertexArray(0)
 
-		gl.Begin(gl.POINTS)
-		gl.Color4f(1, 1, 1, 1)
-		for _, s := range stars {
-			gl.Vertex3f(s[0], s[1], s[2])
-		}
-		gl.End()
-
-		draw_fadenkreuz(&c.P, 1.0)
-		// fillVoid()
 		window.SwapBuffers()
+
 		gpuEnd := glfw.GetTime()
 		cpuTime := (cpuEnd - cpuStart)
 		gpuTime := (gpuEnd - gpuStart)
@@ -209,25 +140,6 @@ func main() {
 			c.P.Orientation[0], c.P.Orientation[1], c.P.Orientation[2],
 			cpuTime*1000, gpuTime*1000, fps)
 	}
-}
-
-func fillVoid() {
-	n := 20
-	s := float32(10.0)
-	gl.Begin(gl.QUADS)
-
-	for i := 0; i < n; i++ {
-		for j := 0; j < n; j++ {
-			for k := 0; k < n; k++ {
-				gl.Color4f(float32(i)/float32(n), float32(j)/float32(n), float32(k)/float32(n), 1.0)
-				gl.Vertex3f(float32(i)*s+float32(0), float32(j)*s+float32(0), float32(k)*s)
-				gl.Vertex3f(float32(i)*s+float32(0), float32(j)*s+float32(1), float32(k)*s)
-				gl.Vertex3f(float32(i)*s+float32(1), float32(j)*s+float32(1), float32(k)*s)
-				gl.Vertex3f(float32(i)*s+float32(1), float32(j)*s+float32(0), float32(k)*s)
-			}
-		}
-	}
-	gl.End()
 }
 
 func draw_fadenkreuz(p *Pov, d float64) {
@@ -252,3 +164,110 @@ func draw_fadenkreuz(p *Pov, d float64) {
 	}
 	gl.End()
 }
+
+func newProgram(vertexShaderSource, fragmentShaderSource string) (uint32, error) {
+	vertexShader, err := compileShader(vertexShaderSource, gl.VERTEX_SHADER)
+	if err != nil {
+		return 0, err
+	}
+
+	fragmentShader, err := compileShader(fragmentShaderSource, gl.FRAGMENT_SHADER)
+	if err != nil {
+		return 0, err
+	}
+
+	program := gl.CreateProgram()
+
+	gl.AttachShader(program, vertexShader)
+	gl.AttachShader(program, fragmentShader)
+	gl.LinkProgram(program)
+
+	var status int32
+	gl.GetProgramiv(program, gl.LINK_STATUS, &status)
+	if status == gl.FALSE {
+		var logLength int32
+		gl.GetProgramiv(program, gl.INFO_LOG_LENGTH, &logLength)
+
+		log := strings.Repeat("\x00", int(logLength+1))
+		gl.GetProgramInfoLog(program, logLength, nil, gl.Str(log))
+
+		return 0, fmt.Errorf("failed to link program: %v", log)
+	}
+
+	gl.DeleteShader(vertexShader)
+	gl.DeleteShader(fragmentShader)
+
+	return program, nil
+}
+
+func compileShader(source string, shaderType uint32) (uint32, error) {
+	shader := gl.CreateShader(shaderType)
+
+	csources, free := gl.Strs(source)
+	gl.ShaderSource(shader, 1, csources, nil)
+	free()
+	gl.CompileShader(shader)
+
+	var status int32
+	gl.GetShaderiv(shader, gl.COMPILE_STATUS, &status)
+	if status == gl.FALSE {
+		var logLength int32
+		gl.GetShaderiv(shader, gl.INFO_LOG_LENGTH, &logLength)
+
+		log := strings.Repeat("\x00", int(logLength+1))
+		gl.GetShaderInfoLog(shader, logLength, nil, gl.Str(log))
+
+		return 0, fmt.Errorf("failed to compile %v: %v", source, log)
+	}
+
+	return shader, nil
+}
+
+var vertexShader = /*`
+#version 330 core
+layout (location = 0) in vec3 vert;
+
+void main()
+{
+    gl_Position = vec4(vert, 1.0);
+}
+` + "\x00"
+*/
+
+`
+#version 410
+
+uniform dmat4 view;
+
+in vec3 vert;
+
+void main() {
+    gl_Position = mat4(view) * vec4(vert, 1);
+}
+` + "\x00"
+
+var fragmentShader = `
+#version 410 core
+out vec4 outputColor;
+
+void main()
+{
+    outputColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
+}
+` + "\x00"
+
+/*
+`
+#version 330
+
+uniform sampler2D tex;
+
+in vec2 fragTexCoord;
+
+out vec4 outputColor;
+
+void main() {
+    outputColor = texture(tex, fragTexCoord);
+}
+` + "\x00"
+*/
