@@ -6,11 +6,9 @@ import (
 	"math"
 	"runtime"
 	"strings"
-	"unsafe"
 
 	"github.com/go-gl/gl/v2.1/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
-	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
 )
 
@@ -62,83 +60,59 @@ func main() {
 	c.Resistance = 0.95
 	c.Setup()
 
-	//gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE) // wireframe
-	gl.PolygonMode(gl.FRONT, gl.FILL)
+	var os []Object
+	cube := Cube()
+	for i := 0; i < 5; i++ {
+		cube.Enhance()
+	}
+	cube.PuffUp(1)
+
+	vao := cube.Load()
+	os = append(os, Object{mgl64.Ident4(), vao})
+
+	gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE) // wireframe
+	//gl.PolygonMode(gl.FRONT, gl.LINE)
 
 	program, err := newProgram(vertexShader, fragmentShader)
 	if err != nil {
 		panic(err)
 	}
 
-	triangle := Mesh{
-		PointCloud{{-0.5, -0.5, 0}, {0.5, -0.5, 0}, {0, 0.5, 0}},
-		[]mgl32.Vec3{{1, 1, 1}, {1, 1, 1}, {1, 1, 1}},
-		[]Surface{{0, 1, 2}},
-		0,
-	}
-
 	gl.UseProgram(program)
 
 	viewU := gl.GetUniformLocation(program, gl.Str("view\x00"))
 
-	projection := mgl64.Perspective(math.Pi/2, width/height, 0.1, 1.0e12)
+	projection := mgl64.Perspective(math.Pi/2, float64(width)/float64(height), 0.1, 1.0e12)
+	camera := Camera{projection, &c.P}
+	scene := Scene{&camera, os}
 
-	var sphereVerts uint32
-	var sphereFaces uint32
-	gl.GenVertexArrays(1, &triangle.VAO)
-	gl.BindVertexArray(triangle.VAO)
+	var cpuEnd, cpuStart float64
+	var gpuEnd, gpuStart float64
 
-	gl.GenBuffers(1, &sphereVerts)
-	gl.BindBuffer(gl.ARRAY_BUFFER, sphereVerts)
-	gl.BufferData(
-		gl.ARRAY_BUFFER,
-		int(unsafe.Sizeof(triangle.Points[0]))*len(triangle.Points),
-		unsafe.Pointer(&triangle.Points[0]),
-		gl.STATIC_DRAW,
-	)
-
-	gl.GenBuffers(1, &sphereFaces)
-	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, sphereFaces)
-	gl.BufferData(
-		gl.ELEMENT_ARRAY_BUFFER,
-		int(unsafe.Sizeof(triangle.Faces[0]))*len(triangle.Faces),
-		unsafe.Pointer(&triangle.Faces[0]),
-		gl.STATIC_DRAW,
-	)
-	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, sphereFaces)
-	gl.VertexAttribPointer(0, 3, gl.DOUBLE, false, int32(unsafe.Sizeof(mgl64.Vec3{})), nil)
-	gl.EnableVertexAttribArray(0)
+	var info Info
+	info.Position = &c.P.Position
+	info.Orientation = &c.P.Orientation
+	info.CpuEnd = &cpuEnd
+	info.CpuStart = &cpuStart
+	info.GpuEnd = &gpuEnd
+	info.GpuStart = &gpuStart
 
 	for !window.ShouldClose() {
-		cpuStart := glfw.GetTime()
+		cpuStart = glfw.GetTime()
 		// static behaviour
 		c.Handle(&s)
 
-		view := projection.Mul4(c.P.Matrix())
-		gl.UniformMatrix4dv(viewU, 1, false, &view[0])
-
-		cpuEnd := glfw.GetTime()
-		gpuStart := cpuEnd
+		cpuEnd = glfw.GetTime()
+		gpuStart = cpuEnd
 
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-		//gl.UseProgram(program)
 
-		//gl.UniformMatrix4dv(viewU, 1, false, &view[0])
-
-		gl.BindVertexArray(triangle.VAO)
-		gl.DrawElements(gl.TRIANGLES, int32(len(triangle.Faces))*3, gl.UNSIGNED_INT, nil)
-		gl.BindVertexArray(0)
-
+		scene.Draw(viewU)
 		window.SwapBuffers()
 
-		gpuEnd := glfw.GetTime()
-		cpuTime := (cpuEnd - cpuStart)
-		gpuTime := (gpuEnd - gpuStart)
-		fps := 1 / (cpuTime + gpuTime)
-		fmt.Printf("\rPosition: (%.2f, %.2f, %.2f) Orientation: (%.2f, %.2f, %.2f) CPU: %.2f ms, GPU: %.2f ms, FPS: %.2f ",
-			c.P.Position[0], c.P.Position[1], c.P.Position[2],
-			c.P.Orientation[0], c.P.Orientation[1], c.P.Orientation[2],
-			cpuTime*1000, gpuTime*1000, fps)
+		gpuEnd = glfw.GetTime()
+
+		info.Print()
 	}
 }
 
