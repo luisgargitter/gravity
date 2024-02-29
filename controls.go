@@ -99,15 +99,15 @@ func (c *Controls) Handle(s *Simulation) {
 	}
 
 	if lock == glfw.Press {
-		c.P.FreeMove(c.Inertia.Mul(s.Scale))
-		c.P.Position = c.P.Position.Add(s.Points[3].Inertia.Mul(s.Time * s.Scale))
+		c.P.FreeMove(c.Inertia)
+		c.P.Position = c.P.Position.Add(s.Points[3].Inertia.Mul(s.Time))
 
-		t := c.P.Position.Sub(s.Points[3].Position.Mul(s.Scale))
+		t := c.P.Position.Sub(s.Points[3].Position)
 		_, theta, phi := mgl64.CartesianToSpherical(mgl64.Vec3{t[0], t[2], t[1]})
 
 		c.P.Orientation = mgl64.Vec3{theta - math.Pi/2, -phi + math.Pi/2, 0}
 	} else {
-		c.P.FPSMove(c.Inertia.Mul(s.Scale))
+		c.P.FPSMove(c.Inertia)
 		c.P.FPSLook(c.Mouse.Sub(mouse).Mul(mouse_sensi))
 	}
 

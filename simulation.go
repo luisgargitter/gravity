@@ -2,7 +2,6 @@ package main
 
 type Simulation struct {
 	Time   float64
-	Scale  float64
 	Points []Particle
 }
 
