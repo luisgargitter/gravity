@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	_ "image/jpeg"
 	"log"
 	"math"
 	"runtime"
@@ -12,7 +13,7 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 )
 
-const mouse_sensi = 0.005
+const mouse_sensi = 0.0005
 const width, height = 1600, 1200
 
 func init() {
@@ -45,15 +46,15 @@ func glfw_setup() *glfw.Window {
 
 func gl_setup() {
 	gl.Enable(gl.CULL_FACE)
-	//gl.CullFace(gl.FRONT)
+	gl.CullFace(gl.FRONT)
 
 	//gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE) // wireframe
-	gl.PolygonMode(gl.FRONT, gl.FILL)
+	gl.PolygonMode(gl.BACK, gl.FILL)
 }
 
 func loadSphere() VAO {
 	cube := Cube()
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 6; i++ {
 		cube.Enhance()
 	}
 	cube.PuffUp(1)
@@ -76,18 +77,23 @@ func main() {
 	c.Resistance = 0.95
 	c.Setup()
 
-	var os []Object
+	var objects []Object
 
 	sphere_vao := loadSphere()
+	texture, err := newTexture("earth.jpg")
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	var radii []float64
 	var s Simulation
 	s.Time = 10000.0
 	s.Points, _, radii = constructSystem("solar_system.toml")
+
 	for i := range s.Points {
 		pos := s.Points[i].Position
-		r := radii[i]
-		os = append(os, Object{mgl64.Translate3D(pos[0], pos[1], pos[2]).Mul4(mgl64.Scale3D(r, r, r)), sphere_vao})
+		r := radii[i] * 10
+		objects = append(objects, Object{mgl64.Translate3D(pos[0], pos[1], pos[2]).Mul4(mgl64.Scale3D(r, r, r)).Mul4(mgl64.HomogRotate3D(-math.Pi/2, mgl64.Vec3{1, 0, 0})), texture, sphere_vao})
 	}
 
 	program, err := newProgram(vertexShader, fragmentShader)
@@ -98,9 +104,9 @@ func main() {
 
 	viewU := gl.GetUniformLocation(program, gl.Str("view\x00"))
 
-	projection := mgl64.Perspective(math.Pi/2, float64(width)/float64(height), 0.1, 1.0e12)
+	projection := mgl64.Perspective(math.Pi/4, float64(width)/float64(height), 0.1, 1.0e12)
 	camera := Camera{projection, &c.P}
-	scene := Scene{&camera, os}
+	scene := Scene{&camera, objects}
 
 	var cpuEnd, cpuStart float64
 	var gpuEnd, gpuStart float64
@@ -123,8 +129,8 @@ func main() {
 
 		for i := range scene.Os {
 			pos := s.Points[i].Position
-			r := radii[i]
-			scene.Os[i].Transform = mgl64.Translate3D(pos[0], pos[1], pos[2]).Mul4(mgl64.Scale3D(r, r, r))
+			r := radii[i] * 10
+			scene.Os[i].Transform = mgl64.Translate3D(pos[0], pos[1], pos[2]).Mul4(mgl64.Scale3D(r, r, r).Mul4(mgl64.HomogRotate3D(-math.Pi/2, mgl64.Vec3{1, 0, 0})))
 		}
 
 		cpuEnd = glfw.GetTime()
@@ -135,7 +141,7 @@ func main() {
 
 		gpuEnd = glfw.GetTime()
 
-		info.Print()
+		//info.Print()
 	}
 }
 
@@ -237,19 +243,27 @@ void main()
 uniform dmat4 view;
 
 in vec3 vert;
+in vec2 uv;
+
+out vec2 texcoord;
 
 void main() {
     gl_Position = mat4(view) * vec4(vert, 1);
+	texcoord = uv;
 }
 ` + "\x00"
 
 var fragmentShader = `
 #version 410 core
 out vec4 outputColor;
+in vec2 texcoord;
+
+uniform sampler2D tex;
 
 void main()
 {
-    outputColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
+	outputColor = texture(tex, texcoord);
+    //outputColor = vec4(texcoord[0], texcoord[1], 0.0f, 1.0f);
 }
 ` + "\x00"
 

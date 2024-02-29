@@ -1,14 +1,22 @@
 package main
 
-import "github.com/go-gl/mathgl/mgl64"
+import (
+	"math"
 
-type PointCloud []mgl64.Vec3
+	"github.com/go-gl/mathgl/mgl64"
+)
 
 type Surface [3]uint32
-type Faces []Surface
+
+type Mesh struct {
+	Vertices []mgl64.Vec3
+	Normals  []mgl64.Vec3
+	UVcoords []mgl64.Vec2
+	Faces    []Surface
+}
 
 func (m *Mesh) Enhance() {
-	adj := make([][]int, len(m.Points))
+	adj := make([][]int, len(m.Vertices))
 	for i := range adj {
 		adj[i] = make([]int, i+1)
 		for j := range adj[i] {
@@ -25,8 +33,8 @@ func (m *Mesh) Enhance() {
 			}
 
 			if adj[a][b] == -1 {
-				adj[a][b] = len(m.Points)
-				m.Points = append(m.Points, lerp64(m.Points[a], m.Points[b], 0.5))
+				adj[a][b] = len(m.Vertices)
+				m.Vertices = append(m.Vertices, lerp64(m.Vertices[a], m.Vertices[b], 0.5))
 				//m.Colors = append(m.Colors, lerp32(m.Colors[a], m.Colors[b], 0.5))
 				//m.Colors = append(m.Colors, mgl32.Vec3{rand.Float32(), rand.Float32(), rand.Float32()})
 			}
@@ -41,8 +49,10 @@ func (m *Mesh) Enhance() {
 }
 
 func (m *Mesh) PuffUp(radius float64) {
-	for i, p := range m.Points {
+	m.UVcoords = make([]mgl64.Vec2, len(m.Vertices))
+	for i, p := range m.Vertices {
 		_, theta, phi := mgl64.CartesianToSpherical(p)
-		m.Points[i] = mgl64.SphericalToCartesian(radius, theta, phi)
+		m.Vertices[i] = mgl64.SphericalToCartesian(radius, theta, phi)
+		m.UVcoords[i] = mgl64.Vec2{(phi + math.Pi), 2 * theta}.Mul(1 / (2 * math.Pi))
 	}
 }

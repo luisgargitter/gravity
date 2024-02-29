@@ -6,7 +6,7 @@ import (
 
 func Tetraheadron() Mesh {
 	var r Mesh
-	r.Points = []mgl64.Vec3{
+	r.Vertices = []mgl64.Vec3{
 		{1, 1, 1},
 		{-1, -1, 1},
 		{1, -1, -1},
@@ -24,7 +24,7 @@ func Tetraheadron() Mesh {
 
 func Cube() Mesh {
 	var r Mesh
-	r.Points = []mgl64.Vec3{
+	r.Vertices = []mgl64.Vec3{
 		{-1, -1, -1},
 		{-1, -1, 1},
 		{-1, 1, -1},
