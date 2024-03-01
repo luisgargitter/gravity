@@ -80,20 +80,21 @@ func main() {
 	var objects []Object
 
 	sphere_vao := loadSphere()
-	texture, err := newTexture("earth.jpg")
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	var radii []float64
+	var textures []uint32
 	var s Simulation
 	s.Time = 10000.0
-	s.Points, _, radii = constructSystem("solar_system.toml")
+	s.Points, radii, textures = constructSystem("solar_system.toml")
 
 	for i := range s.Points {
 		pos := s.Points[i].Position
 		r := radii[i] * 10
-		objects = append(objects, Object{mgl64.Translate3D(pos[0], pos[1], pos[2]).Mul4(mgl64.Scale3D(r, r, r)).Mul4(mgl64.HomogRotate3D(-math.Pi/2, mgl64.Vec3{1, 0, 0})), texture, sphere_vao})
+		objects = append(objects,
+			Object{mgl64.Translate3D(pos[0], pos[1], pos[2]).Mul4(mgl64.Scale3D(r, r, r)).Mul4(mgl64.HomogRotate3D(-math.Pi/2, mgl64.Vec3{1, 0, 0})),
+				textures[i],
+				sphere_vao},
+		)
 	}
 
 	program, err := newProgram(vertexShader, fragmentShader)

@@ -156,7 +156,8 @@ func (s *Scene) Draw(viewUni int32) {
 		t := m.Mul4(o.Transform)
 		gl.UniformMatrix4dv(viewUni, 1, false, &t[0])
 
-		gl.BindTexture(gl.TEXTURE0, o.texture)
+		gl.ActiveTexture(gl.TEXTURE0)
+		gl.BindTexture(gl.TEXTURE_2D, o.texture)
 		o.Vao.Draw()
 	}
 }
