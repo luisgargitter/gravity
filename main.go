@@ -68,7 +68,7 @@ func main() {
 	defer glfw.Terminate()
 	gl_setup()
 
-	p := Pov{mgl64.Vec3{}, mgl64.Vec3{}}
+	p := Pov{mgl64.Vec3{0, 0, 20e9}, mgl64.Vec3{}}
 
 	var c Controls
 	c.Window = *window
