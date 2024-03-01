@@ -14,7 +14,7 @@ import (
 )
 
 const mouse_sensi = 0.0005
-const width, height = 1600, 1200
+const width, height = 800, 600
 
 func init() {
 	// GLFW event handling must run on the main OS thread
@@ -63,6 +63,7 @@ func loadSphere() VAO {
 }
 
 func main() {
+	fmt.Println("Initialization...")
 	window := glfw_setup()
 	defer glfw.Terminate()
 	gl_setup()
@@ -85,7 +86,9 @@ func main() {
 	var textures []uint32
 	var s Simulation
 	s.Time = 10000.0
+	fmt.Println("Loading Planetary System...")
 	s.Points, radii, textures = constructSystem("solar_system.toml")
+	fmt.Println("Planetary System Loaded.")
 
 	for i := range s.Points {
 		pos := s.Points[i].Position
@@ -97,10 +100,12 @@ func main() {
 		)
 	}
 
+	fmt.Println("Compiling Shaders...")
 	program, err := newProgram(vertexShader, fragmentShader)
 	if err != nil {
 		panic(err)
 	}
+	fmt.Println("Compilation Done.")
 	gl.UseProgram(program)
 
 	viewU := gl.GetUniformLocation(program, gl.Str("view\x00"))
@@ -142,7 +147,7 @@ func main() {
 
 		gpuEnd = glfw.GetTime()
 
-		//info.Print()
+		info.Print()
 	}
 }
 
