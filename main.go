@@ -14,7 +14,7 @@ import (
 )
 
 const mouse_sensi = 0.0005
-const width, height = 800, 600
+const width, height = 1600, 1200
 
 func init() {
 	// GLFW event handling must run on the main OS thread
@@ -45,6 +45,8 @@ func glfw_setup() *glfw.Window {
 }
 
 func gl_setup() {
+	gl.Viewport(0, 0, width, height)
+
 	gl.Enable(gl.CULL_FACE)
 	gl.CullFace(gl.FRONT)
 
@@ -74,8 +76,8 @@ func main() {
 	c.Window = *window
 	c.P = p
 	c.Inertia = mgl64.Vec3{0, 0, 0}
-	c.Acceleration = 10000000
-	c.Resistance = 0.95
+	c.Acceleration = 100000
+	c.Resistance = 1.0
 	c.Setup()
 
 	var objects []Object
@@ -125,12 +127,16 @@ func main() {
 	info.GpuEnd = &gpuEnd
 	info.GpuStart = &gpuStart
 
+	gl.Enable(gl.DEPTH_TEST)
+	gl.DepthFunc(gl.ALWAYS)
+
 	for !window.ShouldClose() {
 		cpuStart = glfw.GetTime()
 		// static behaviour
 		s.Step()
 		c.Handle(&s)
 
+		gl.ClearColor(0, 0, 0, 1)
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
 		for i := range scene.Os {
@@ -254,7 +260,7 @@ in vec2 uv;
 out vec2 texcoord;
 
 void main() {
-    gl_Position = mat4(view) * vec4(vert, 1);
+    gl_Position = mat4(view) * vec4(vert, 1.0f);
 	texcoord = uv;
 }
 ` + "\x00"
@@ -268,6 +274,7 @@ uniform sampler2D tex;
 
 void main()
 {
+	//outputColor = vec4(vec3(1/gl_FragCoord.z), 1.0);
 	outputColor = texture(tex, texcoord);
     //outputColor = vec4(texcoord[0], texcoord[1], 0.0f, 1.0f);
 }
