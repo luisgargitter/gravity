@@ -49,11 +49,13 @@ type Controls struct {
 	Inertia      mgl64.Vec3
 	Acceleration float64
 	Resistance   float64
+	Locked       bool
+	PlanetIndex  int
 }
 
 func (c *Controls) Setup() {
 	c.Window.SetInputMode(glfw.CursorMode, glfw.CursorDisabled)
-	if glfw.RawMouseMotionSupported() == false {
+	if !glfw.RawMouseMotionSupported() {
 		log.Fatalln("raw mouse motion not supported")
 	}
 	c.Window.SetInputMode(glfw.RawMouseMotion, glfw.True)
@@ -75,6 +77,7 @@ func (c *Controls) Handle(s *Simulation) {
 	down := c.Window.GetKey(glfw.KeyLeftShift)
 	q := c.Window.GetKey(glfw.KeyQ)
 	lock := c.Window.GetKey(glfw.KeyTab)
+	stop := c.Window.GetKey(glfw.KeyL)
 
 	if sw == glfw.Press {
 		c.Inertia[2] += c.Acceleration
@@ -97,18 +100,28 @@ func (c *Controls) Handle(s *Simulation) {
 	if q == glfw.Press {
 		c.Window.SetShouldClose(true)
 	}
+	if stop == glfw.Press {
+		c.Inertia = c.Inertia.Mul(0)
+	}
 
 	if lock == glfw.Press {
-		c.P.FreeMove(c.Inertia)
-		c.P.Position = c.P.Position.Add(s.Points[3].Inertia.Mul(s.Time))
+		c.Locked = true
 
-		t := c.P.Position.Sub(s.Points[3].Position)
+		c.P.FreeMove(c.Inertia)
+		c.P.Position = c.P.Position.Add(s.Points[c.PlanetIndex].Inertia.Mul(s.Time))
+
+		t := c.P.Position.Sub(s.Points[c.PlanetIndex].Position)
 		_, theta, phi := mgl64.CartesianToSpherical(mgl64.Vec3{t[0], t[2], t[1]})
 
 		c.P.Orientation = mgl64.Vec3{theta - math.Pi/2, -phi + math.Pi/2, 0}
+
 	} else {
 		c.P.FPSMove(c.Inertia)
 		c.P.FPSLook(c.Mouse.Sub(mouse).Mul(mouse_sensi))
+	}
+	if lock == glfw.Release && c.Locked {
+		c.Locked = false
+		c.PlanetIndex = (c.PlanetIndex + 1) % len(s.Points)
 	}
 
 	c.Inertia = c.Inertia.Mul(c.Resistance) // for smooth movement (Kondensator-Ladekurve)

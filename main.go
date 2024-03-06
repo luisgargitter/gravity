@@ -18,8 +18,6 @@ const width, height = 1600, 1200
 
 const glCorrectionScale = 10e-9
 
-var glScaleCorrection = mgl64.Scale3D(glCorrectionScale, glCorrectionScale, glCorrectionScale)
-
 func init() {
 	// GLFW event handling must run on the main OS thread
 	runtime.LockOSThread()
@@ -82,6 +80,7 @@ func main() {
 	c.Inertia = mgl64.Vec3{0, 0, 0}
 	c.Acceleration = 100000
 	c.Resistance = 1.0
+	c.PlanetIndex = 3
 	c.Setup()
 
 	var objects []Object
@@ -90,10 +89,11 @@ func main() {
 
 	var radii []float64
 	var textures []uint32
+	var names []string
 	var s Simulation
 	s.Time = 10000.0
 	fmt.Println("Loading Planetary System...")
-	s.Points, radii, textures = constructSystem("solar_system.toml")
+	s.Points, radii, textures, names = constructSystem("solar_system.toml")
 	fmt.Println("Planetary System Loaded.")
 
 	for i := range s.Points {
@@ -130,6 +130,9 @@ func main() {
 	info.CpuStart = &cpuStart
 	info.GpuEnd = &gpuEnd
 	info.GpuStart = &gpuStart
+	info.Planets = &names
+	info.Locked = &c.Locked
+	info.PlanetIndex = &c.PlanetIndex
 
 	gl.Enable(gl.DEPTH_TEST)
 	gl.DepthFunc(gl.LESS)
@@ -159,29 +162,6 @@ func main() {
 
 		info.Print()
 	}
-}
-
-func draw_fadenkreuz(p *Pov, d float64) {
-	gl.LineWidth(1)
-	gl.Begin(gl.LINES)
-
-	var c [4]float32
-	gl.Color4f(1.0, 0.0, 0.0, 1.0)
-
-	p.FreeMove(mgl64.Vec3{0, 0, 5 * d})
-	base := p.Position
-	p.FreeMove(mgl64.Vec3{0, 0, -5 * d})
-
-	for i := 0; i < 3; i++ {
-		c = [4]float32{0.0, 0.0, 0.0, 1.0}
-		c[i] = 1.0
-		gl.Color4f(c[0], c[1], c[2], c[3])
-		t := base
-		gl.Vertex3f(float32(t[0]), float32(t[1]), float32(t[2]))
-		t[i] += d
-		gl.Vertex3f(float32(t[0]), float32(t[1]), float32(t[2]))
-	}
-	gl.End()
 }
 
 func newProgram(vertexShaderSource, fragmentShaderSource string) (uint32, error) {
