@@ -16,6 +16,10 @@ import (
 const mouse_sensi = 0.0005
 const width, height = 1600, 1200
 
+const glCorrectionScale = 10e-9
+
+var glScaleCorrection = mgl64.Scale3D(glCorrectionScale, glCorrectionScale, glCorrectionScale)
+
 func init() {
 	// GLFW event handling must run on the main OS thread
 	runtime.LockOSThread()
@@ -93,8 +97,8 @@ func main() {
 	fmt.Println("Planetary System Loaded.")
 
 	for i := range s.Points {
-		pos := s.Points[i].Position
-		r := radii[i] * 10
+		pos := s.Points[i].Position.Mul(glCorrectionScale)
+		r := radii[i] * 10 * glCorrectionScale
 		objects = append(objects,
 			Object{mgl64.Translate3D(pos[0], pos[1], pos[2]).Mul4(mgl64.Scale3D(r, r, r)).Mul4(mgl64.HomogRotate3D(-math.Pi/2, mgl64.Vec3{1, 0, 0})),
 				textures[i],
@@ -112,7 +116,7 @@ func main() {
 
 	viewU := gl.GetUniformLocation(program, gl.Str("view\x00"))
 
-	projection := mgl64.Perspective(math.Pi/4, float64(width)/float64(height), 0.1, 1.0e12)
+	projection := mgl64.Perspective(math.Pi/4, float64(width)/float64(height), 0.1, 1.0e12*glCorrectionScale)
 	camera := Camera{projection, &c.P}
 	scene := Scene{&camera, objects}
 
@@ -120,7 +124,7 @@ func main() {
 	var gpuEnd, gpuStart float64
 
 	var info Info
-	info.Position = &c.P.Position
+	info.Inertia = &c.Inertia
 	info.Orientation = &c.P.Orientation
 	info.CpuEnd = &cpuEnd
 	info.CpuStart = &cpuStart
@@ -128,7 +132,7 @@ func main() {
 	info.GpuStart = &gpuStart
 
 	gl.Enable(gl.DEPTH_TEST)
-	gl.DepthFunc(gl.ALWAYS)
+	gl.DepthFunc(gl.LESS)
 
 	for !window.ShouldClose() {
 		cpuStart = glfw.GetTime()
@@ -140,8 +144,8 @@ func main() {
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
 		for i := range scene.Os {
-			pos := s.Points[i].Position
-			r := radii[i] * 10
+			pos := s.Points[i].Position.Mul(glCorrectionScale)
+			r := radii[i] * 10 * glCorrectionScale
 			scene.Os[i].Transform = mgl64.Translate3D(pos[0], pos[1], pos[2]).Mul4(mgl64.Scale3D(r, r, r).Mul4(mgl64.HomogRotate3D(-math.Pi/2, mgl64.Vec3{1, 0, 0})))
 		}
 
