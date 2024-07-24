@@ -9,20 +9,15 @@ import (
 type Info struct {
 	Inertia     *mgl64.Vec3
 	Orientation *mgl64.Vec3
-	CpuStart    *float64
-	CpuEnd      *float64
-	GpuStart    *float64
-	GpuEnd      *float64
+	CpuTime     *float64
+	GpuTime     *float64
+	DeltaTime   *float64
 	Planets     *[]string
 	Locked      *bool
 	PlanetIndex *int
 }
 
 func (i *Info) Print() {
-	cpuTime := (*i.CpuEnd - *i.CpuStart)
-	gpuTime := (*i.GpuEnd - *i.GpuStart)
-	fps := 1 / (cpuTime + gpuTime)
-
 	locked := "none"
 	if *i.Locked {
 		locked = (*i.Planets)[*i.PlanetIndex]
@@ -34,6 +29,6 @@ func (i *Info) Print() {
 		i.Inertia[0], i.Inertia[1], i.Inertia[2],
 		i.Orientation[0], i.Orientation[1], i.Orientation[2],
 		locked,
-		cpuTime*1000, gpuTime*1000, fps,
+		*i.CpuTime*1000, *i.GpuTime*1000, 1 / *i.DeltaTime,
 	)
 }

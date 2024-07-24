@@ -7,6 +7,7 @@ import (
 	"math"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/go-gl/gl/v2.1/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
@@ -17,6 +18,8 @@ const mouse_sensi = 0.0005
 const width, height = 1600, 1200
 
 const glCorrectionScale = 10e-9
+
+const fpsTarget = 60
 
 func init() {
 	// GLFW event handling must run on the main OS thread
@@ -38,6 +41,7 @@ func glfw_setup() *glfw.Window {
 	}
 
 	window.MakeContextCurrent()
+	glfw.SwapInterval(0) // for controlling framerate
 
 	if err := gl.Init(); err != nil {
 		log.Fatalln("failed to initialize OpenGL", err)
@@ -58,7 +62,7 @@ func gl_setup() {
 
 func loadSphere() VAO {
 	cube := Cube()
-	for i := 0; i < 6; i++ {
+	for i := 0; i < 5; i++ {
 		cube.Enhance()
 	}
 	cube.PuffUp(1)
@@ -120,16 +124,14 @@ func main() {
 	camera := Camera{projection, &c.P}
 	scene := Scene{&camera, objects}
 
-	var cpuEnd, cpuStart float64
-	var gpuEnd, gpuStart float64
+	var cpuTime, gpuTime, deltaTime float64
 
 	var info Info
 	info.Inertia = &c.Inertia
 	info.Orientation = &c.P.Orientation
-	info.CpuEnd = &cpuEnd
-	info.CpuStart = &cpuStart
-	info.GpuEnd = &gpuEnd
-	info.GpuStart = &gpuStart
+	info.CpuTime = &cpuTime
+	info.GpuTime = &gpuTime
+	info.DeltaTime = &deltaTime
 	info.Planets = &names
 	info.Locked = &c.Locked
 	info.PlanetIndex = &c.PlanetIndex
@@ -138,7 +140,9 @@ func main() {
 	gl.DepthFunc(gl.LESS)
 
 	for !window.ShouldClose() {
-		cpuStart = glfw.GetTime()
+		info.Print()
+		deltaTime = glfw.GetTime()
+		cpuTime = deltaTime
 		// static behaviour
 		s.Step()
 		c.Handle(&s)
@@ -152,15 +156,16 @@ func main() {
 			scene.Os[i].Transform = mgl64.Translate3D(pos[0], pos[1], pos[2]).Mul4(mgl64.Scale3D(r, r, r).Mul4(mgl64.HomogRotate3D(-math.Pi/2, mgl64.Vec3{1, 0, 0})))
 		}
 
-		cpuEnd = glfw.GetTime()
-		gpuStart = cpuEnd
+		gpuTime = glfw.GetTime()
+		cpuTime = gpuTime - cpuTime
 
 		scene.Draw(viewU)
 		window.SwapBuffers()
+		gpuTime = glfw.GetTime() - gpuTime
 
-		gpuEnd = glfw.GetTime()
-
-		info.Print()
+		sleepTime := 1/fpsTarget - (cpuTime + gpuTime)
+		time.Sleep(time.Duration(sleepTime) * time.Second)
+		deltaTime = glfw.GetTime() - deltaTime
 	}
 }
 
