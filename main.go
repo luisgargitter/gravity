@@ -15,7 +15,7 @@ import (
 )
 
 const mouse_sensi = 0.0005
-const width, height = 1600, 1200
+const width, height = 800, 600
 
 const glCorrectionScale = 10e-9
 
@@ -138,9 +138,13 @@ func main() {
 
 	gl.Enable(gl.DEPTH_TEST)
 	gl.DepthFunc(gl.LESS)
+	i := 0
+	for ;!window.ShouldClose(); i++ {
+		if i % fpsTarget == 0 {
+			i = 0
+			info.Print()
+		}
 
-	for !window.ShouldClose() {
-		info.Print()
 		deltaTime = glfw.GetTime()
 		cpuTime = deltaTime
 		// static behaviour
@@ -163,10 +167,11 @@ func main() {
 		window.SwapBuffers()
 		gpuTime = glfw.GetTime() - gpuTime
 
-		sleepTime := 1/fpsTarget - (cpuTime + gpuTime)
+		sleepTime := 1.0/fpsTarget - (cpuTime + gpuTime)
 		time.Sleep(time.Duration(sleepTime) * time.Second)
 		deltaTime = glfw.GetTime() - deltaTime
 	}
+	fmt.Print("\n")
 }
 
 func newProgram(vertexShaderSource, fragmentShaderSource string) (uint32, error) {
