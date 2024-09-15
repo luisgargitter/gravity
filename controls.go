@@ -106,11 +106,12 @@ func (c *Controls) Handle(s *Simulation) {
 
 	if lock == glfw.Press {
 		c.Locked = true
+		planet := s.Points[c.PlanetIndex]
 
 		c.P.FreeMove(c.Inertia)
-		c.P.Position = c.P.Position.Add(s.Points[c.PlanetIndex].Inertia.Mul(s.Time))
+		c.P.Position = c.P.Position.Add(planet.Inertia.Mul(s.Time/planet.Mass))
 
-		t := c.P.Position.Sub(s.Points[c.PlanetIndex].Position)
+		t := c.P.Position.Sub(planet.Position)
 		_, theta, phi := mgl64.CartesianToSpherical(mgl64.Vec3{t[0], t[2], t[1]})
 
 		c.P.Orientation = mgl64.Vec3{theta - math.Pi/2, -phi + math.Pi/2, 0}

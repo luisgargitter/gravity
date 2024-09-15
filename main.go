@@ -95,7 +95,7 @@ func main() {
 	var textures []uint32
 	var names []string
 	var s Simulation
-	s.Time = 10000.0
+	s.Time = 100.0
 	fmt.Println("Loading Planetary System...")
 	s.Points, radii, textures, names = constructSystem("solar_system.toml")
 	fmt.Println("Planetary System Loaded.")
@@ -127,6 +127,7 @@ func main() {
 	var cpuTime, gpuTime, deltaTime float64
 
 	var info Info
+	info.Position = &c.P.Position
 	info.Inertia = &c.Inertia
 	info.Orientation = &c.P.Orientation
 	info.CpuTime = &cpuTime
@@ -148,7 +149,8 @@ func main() {
 		deltaTime = glfw.GetTime()
 		cpuTime = deltaTime
 		// static behaviour
-		s.Step()
+			s.Step()
+		
 		c.Handle(&s)
 
 		gl.ClearColor(0, 0, 0, 1)
