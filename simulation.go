@@ -19,3 +19,7 @@ func (s *Simulation) Step() {
 		s.Points[i].Move(s.Time)
 	}
 }
+
+func (s *Simulation) GetStepFunction() {
+
+}
