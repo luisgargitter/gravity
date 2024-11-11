@@ -19,7 +19,7 @@ const width, height = 800, 600
 
 const glCorrectionScale = 10e-9
 
-const fpsTarget = 60
+const fpsTarget = 60.0
 
 func init() {
 	// GLFW event handling must run on the main OS thread
@@ -140,8 +140,8 @@ func main() {
 	gl.Enable(gl.DEPTH_TEST)
 	gl.DepthFunc(gl.LESS)
 	i := 0
-	for ;!window.ShouldClose(); i++ {
-		if i % fpsTarget == 0 {
+	for ; !window.ShouldClose(); i++ {
+		if i%fpsTarget == 0 {
 			i = 0
 			info.Print()
 		}
@@ -149,8 +149,8 @@ func main() {
 		deltaTime = glfw.GetTime()
 		cpuTime = deltaTime
 		// static behaviour
-			s.Step()
-		
+		s.Step()
+
 		c.Handle(&s)
 
 		gl.ClearColor(0, 0, 0, 1)
@@ -169,8 +169,9 @@ func main() {
 		window.SwapBuffers()
 		gpuTime = glfw.GetTime() - gpuTime
 
-		sleepTime := 1.0/fpsTarget - (cpuTime + gpuTime)
-		time.Sleep(time.Duration(sleepTime) * time.Second)
+		sleepTime := time.Duration(int64(1000.0/float64(fpsTarget)-cpuTime+gpuTime)) * time.Millisecond
+
+		time.Sleep(sleepTime)
 		deltaTime = glfw.GetTime() - deltaTime
 	}
 	fmt.Print("\n")
