@@ -19,7 +19,7 @@ const width, height = 800, 600
 
 const glCorrectionScale = 10e-9
 
-const fpsTarget = 60
+const fpsTarget = 60.0
 
 func init() {
 	// GLFW event handling must run on the main OS thread
@@ -140,38 +140,37 @@ func main() {
 	gl.Enable(gl.DEPTH_TEST)
 	gl.DepthFunc(gl.LESS)
 	i := 0
-	for ;!window.ShouldClose(); i++ {
-		if i % fpsTarget == 0 {
+	for ; !window.ShouldClose(); i++ {
+		t := glfw.GetTime()
+
+		if i%fpsTarget == 0 {
 			i = 0
 			info.Print()
 		}
 
-		deltaTime = glfw.GetTime()
-		cpuTime = deltaTime
 		// static behaviour
-			s.Step()
-		
+		s.Step()
+
 		c.Handle(&s)
 
 		gl.ClearColor(0, 0, 0, 1)
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-
 		for i := range scene.Os {
 			pos := s.Points[i].Position.Mul(glCorrectionScale)
 			r := radii[i] * 10 * glCorrectionScale
 			scene.Os[i].Transform = mgl64.Translate3D(pos[0], pos[1], pos[2]).Mul4(mgl64.Scale3D(r, r, r).Mul4(mgl64.HomogRotate3D(-math.Pi/2, mgl64.Vec3{1, 0, 0})))
 		}
 
-		gpuTime = glfw.GetTime()
-		cpuTime = gpuTime - cpuTime
+		cpuTime = glfw.GetTime() - t
 
 		scene.Draw(viewU)
 		window.SwapBuffers()
-		gpuTime = glfw.GetTime() - gpuTime
+		gpuTime = glfw.GetTime() - (t + cpuTime)
 
-		sleepTime := 1.0/fpsTarget - (cpuTime + gpuTime)
-		time.Sleep(time.Duration(sleepTime) * time.Second)
-		deltaTime = glfw.GetTime() - deltaTime
+		sleepTime := time.Duration(int64(1000.0/float64(fpsTarget)-cpuTime+gpuTime)) * time.Millisecond
+
+		time.Sleep(sleepTime)
+		deltaTime = glfw.GetTime() - t
 	}
 	fmt.Print("\n")
 }
