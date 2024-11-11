@@ -58,16 +58,9 @@ func gl_setup() {
 
 	//gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE) // wireframe
 	gl.PolygonMode(gl.BACK, gl.FILL)
-}
 
-func loadSphere() VAO {
-	cube := Cube()
-	for i := 0; i < 5; i++ {
-		cube.Enhance()
-	}
-	cube.PuffUp(1)
-
-	return cube.Load()
+	gl.Enable(gl.DEPTH_TEST)
+	gl.DepthFunc(gl.LESS)
 }
 
 func main() {
@@ -87,31 +80,24 @@ func main() {
 	c.PlanetIndex = 3
 	c.Setup()
 
-	var objects []Object
+	sphere_vao := loadSphere(5, 1.0)
 
-	sphere_vao := loadSphere()
-
-	var radii []float64
-	var textures []uint32
-	var names []string
-	var s Simulation
-	s.Time = 100.0
 	fmt.Println("Loading Planetary System...")
-	s.Points, radii, textures, names = constructSystem("solar_system.toml")
+	points, radii, textures, names := constructSystem("solar_system.toml")
 	fmt.Println("Planetary System Loaded.")
 
+	s := Simulation{100.0, points}
+
+	objects := make([]Object, len(s.Points))
 	for i := range s.Points {
 		pos := s.Points[i].Position.Mul(glCorrectionScale)
 		r := radii[i] * 10 * glCorrectionScale
-		objects = append(objects,
-			Object{mgl64.Translate3D(pos[0], pos[1], pos[2]).Mul4(mgl64.Scale3D(r, r, r)).Mul4(mgl64.HomogRotate3D(-math.Pi/2, mgl64.Vec3{1, 0, 0})),
-				textures[i],
-				sphere_vao},
-		)
+		t := mgl64.Translate3D(pos[0], pos[1], pos[2]).Mul4(mgl64.Scale3D(r, r, r)).Mul4(mgl64.HomogRotate3D(-math.Pi/2, mgl64.Vec3{1, 0, 0}))
+		objects[i] = Object{t, textures[i], sphere_vao}
 	}
 
 	fmt.Println("Compiling Shaders...")
-	program, err := newProgram(vertexShader, fragmentShader)
+	program, err := newProgram(vertexShaderSource, fragmentShaderSource)
 	if err != nil {
 		panic(err)
 	}
@@ -120,25 +106,24 @@ func main() {
 
 	viewU := gl.GetUniformLocation(program, gl.Str("view\x00"))
 
-	projection := mgl64.Perspective(math.Pi/4, float64(width)/float64(height), 0.1, 1.0e12*glCorrectionScale)
+	projection := mgl64.Perspective(math.Pi/4.0, float64(width)/float64(height), 0.1, 1.0e12*glCorrectionScale)
 	camera := Camera{projection, &c.P}
 	scene := Scene{&camera, objects}
 
 	var cpuTime, gpuTime, deltaTime float64
 
-	var info Info
-	info.Position = &c.P.Position
-	info.Inertia = &c.Inertia
-	info.Orientation = &c.P.Orientation
-	info.CpuTime = &cpuTime
-	info.GpuTime = &gpuTime
-	info.DeltaTime = &deltaTime
-	info.Planets = &names
-	info.Locked = &c.Locked
-	info.PlanetIndex = &c.PlanetIndex
+	info := Info{
+		&c.P.Position,
+		&c.Inertia,
+		&c.P.Orientation,
+		&cpuTime,
+		&gpuTime,
+		&deltaTime,
+		&names,
+		&c.Locked,
+		&c.PlanetIndex,
+	}
 
-	gl.Enable(gl.DEPTH_TEST)
-	gl.DepthFunc(gl.LESS)
 	i := 0
 	for ; !window.ShouldClose(); i++ {
 		t := glfw.GetTime()
@@ -167,7 +152,7 @@ func main() {
 		window.SwapBuffers()
 		gpuTime = glfw.GetTime() - (t + cpuTime)
 
-		sleepTime := time.Duration(int64(1000.0/float64(fpsTarget)-cpuTime+gpuTime)) * time.Millisecond
+		sleepTime := time.Duration(int64(1000.0/float64(fpsTarget)-(cpuTime+gpuTime))) * time.Millisecond
 
 		time.Sleep(sleepTime)
 		deltaTime = glfw.GetTime() - t
@@ -233,7 +218,7 @@ func compileShader(source string, shaderType uint32) (uint32, error) {
 	return shader, nil
 }
 
-var vertexShader = /*`
+var vertexShaderSource = /*`
 #version 330 core
 layout (location = 0) in vec3 vert;
 
@@ -260,7 +245,7 @@ void main() {
 }
 ` + "\x00"
 
-var fragmentShader = `
+var fragmentShaderSource = `
 #version 410 core
 out vec4 outputColor;
 in vec2 texcoord;
