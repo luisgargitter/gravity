@@ -63,7 +63,7 @@ func (c *Controls) Setup() {
 	c.Mouse[0], c.Mouse[1] = c.Window.GetCursorPos()
 }
 
-func (c *Controls) Handle(s *Simulation) {
+func (c *Controls) Handle(particles []Particle, dt float64) {
 	var mouse mgl64.Vec2
 	glfw.PollEvents()
 	// input dependent behaviour
@@ -106,10 +106,10 @@ func (c *Controls) Handle(s *Simulation) {
 
 	if lock == glfw.Press {
 		c.Locked = true
-		planet := s.Points[c.PlanetIndex]
+		planet := particles[c.PlanetIndex]
 
 		c.P.FreeMove(c.Inertia)
-		c.P.Position = c.P.Position.Add(planet.Inertia.Mul(s.Time/planet.Mass))
+		c.P.Position = c.P.Position.Add(planet.Velocity.Mul(dt))
 
 		t := c.P.Position.Sub(planet.Position)
 		_, theta, phi := mgl64.CartesianToSpherical(mgl64.Vec3{t[0], t[2], t[1]})
@@ -122,7 +122,7 @@ func (c *Controls) Handle(s *Simulation) {
 	}
 	if lock == glfw.Release && c.Locked {
 		c.Locked = false
-		c.PlanetIndex = (c.PlanetIndex + 1) % len(s.Points)
+		c.PlanetIndex = (c.PlanetIndex + 1) % len(particles)
 	}
 
 	c.Inertia = c.Inertia.Mul(c.Resistance) // for smooth movement (Kondensator-Ladekurve)

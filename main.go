@@ -12,7 +12,8 @@ import (
 	"github.com/go-gl/gl/v2.1/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
 	"github.com/go-gl/mathgl/mgl64"
-	//"github.com/luisgargitter/numerics"
+
+	"github.com/luisgargitter/numerics"
 )
 
 const mouse_sensi = 0.0005
@@ -72,7 +73,6 @@ func loadSphere() VAO {
 }
 
 func main() {
-
 	fmt.Println("Initialization...")
 	window := glfw_setup()
 	defer glfw.Terminate()
@@ -93,17 +93,12 @@ func main() {
 
 	sphere_vao := loadSphere()
 
-	var radii []float64
-	var textures []uint32
-	var names []string
-	var s Simulation
-	s.Time = 100.0
 	fmt.Println("Loading Planetary System...")
-	s.Points, radii, textures, names = constructSystem("solar_system.toml")
+	particles, radii, textures, names := constructSystem("solar_system.toml")
 	fmt.Println("Planetary System Loaded.")
 
-	for i := range s.Points {
-		pos := s.Points[i].Position.Mul(glCorrectionScale)
+	for i := range particles {
+		pos := particles[i].Position.Mul(glCorrectionScale)
 		r := radii[i] * 10 * glCorrectionScale
 		objects = append(objects,
 			Object{mgl64.Translate3D(pos[0], pos[1], pos[2]).Mul4(mgl64.Scale3D(r, r, r)).Mul4(mgl64.HomogRotate3D(-math.Pi/2, mgl64.Vec3{1, 0, 0})),
@@ -111,6 +106,12 @@ func main() {
 				sphere_vao},
 		)
 	}
+
+	dt := 0.0
+
+	vn := ParticlesToVecN(particles)
+	y := mgl64.NewVecN(vn.Size())
+	rk4w := numerics.NewRK4Workspace(vn.Size())
 
 	fmt.Println("Compiling Shaders...")
 	program, err := newProgram(vertexShader, fragmentShader)
@@ -151,15 +152,16 @@ func main() {
 		deltaTime = glfw.GetTime()
 		cpuTime = deltaTime
 		// static behaviour
-		s.Step()
+		numerics.RK4(rk4w, dParticleSystem, dt, y, y)
+		particles = VecNToParticles(vn)
 
-		c.Handle(&s)
+		c.Handle(particles, dt)
 
 		gl.ClearColor(0, 0, 0, 1)
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
 		for i := range scene.Os {
-			pos := s.Points[i].Position.Mul(glCorrectionScale)
+			pos := particles[i].Position.Mul(glCorrectionScale)
 			r := radii[i] * 10 * glCorrectionScale
 			scene.Os[i].Transform = mgl64.Translate3D(pos[0], pos[1], pos[2]).Mul4(mgl64.Scale3D(r, r, r).Mul4(mgl64.HomogRotate3D(-math.Pi/2, mgl64.Vec3{1, 0, 0})))
 		}
