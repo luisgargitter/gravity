@@ -56,3 +56,13 @@ func (m *Mesh) PuffUp(radius float64) {
 		m.UVcoords[i] = mgl64.Vec2{(phi + math.Pi), 2 * theta}.Mul(1 / (2 * math.Pi))
 	}
 }
+
+func loadSphere(detail int, radius float64) VAO {
+	cube := Cube()
+	for i := 0; i < detail; i++ {
+		cube.Enhance()
+	}
+	cube.PuffUp(radius)
+
+	return cube.Load()
+}

@@ -7,7 +7,7 @@ import (
 )
 
 type Info struct {
-	Position	*mgl64.Vec3
+	Position    *mgl64.Vec3
 	Inertia     *mgl64.Vec3
 	Orientation *mgl64.Vec3
 	CpuTime     *float64
@@ -31,6 +31,6 @@ func (i *Info) Print() {
 		i.Inertia[0], i.Inertia[1], i.Inertia[2],
 		i.Orientation[0], i.Orientation[1], i.Orientation[2],
 		locked,
-		*i.CpuTime*1000, *i.GpuTime*1000, 1 / *i.DeltaTime,
+		*i.CpuTime*1000, *i.GpuTime*1000, 1.0 / *i.DeltaTime,
 	)
 }
