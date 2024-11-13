@@ -21,7 +21,7 @@ const width, height = 800, 600
 
 const glCorrectionScale = 10e-9
 
-const fpsTarget = 60
+const fpsTarget = 60.0
 
 func init() {
 	// GLFW event handling must run on the main OS thread
@@ -60,16 +60,9 @@ func gl_setup() {
 
 	//gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE) // wireframe
 	gl.PolygonMode(gl.BACK, gl.FILL)
-}
 
-func loadSphere() VAO {
-	cube := Cube()
-	for i := 0; i < 5; i++ {
-		cube.Enhance()
-	}
-	cube.PuffUp(1)
-
-	return cube.Load()
+	gl.Enable(gl.DEPTH_TEST)
+	gl.DepthFunc(gl.LESS)
 }
 
 func main() {
@@ -89,7 +82,7 @@ func main() {
 	c.PlanetIndex = 3
 	c.Setup()
 
-	var objects []Object
+	sphere_vao := loadSphere(5, 1.0)
 
 	sphere_vao := loadSphere()
 
@@ -100,11 +93,8 @@ func main() {
 	for i := range particles {
 		pos := particles[i].Position.Mul(glCorrectionScale)
 		r := radii[i] * 10 * glCorrectionScale
-		objects = append(objects,
-			Object{mgl64.Translate3D(pos[0], pos[1], pos[2]).Mul4(mgl64.Scale3D(r, r, r)).Mul4(mgl64.HomogRotate3D(-math.Pi/2, mgl64.Vec3{1, 0, 0})),
-				textures[i],
-				sphere_vao},
-		)
+		t := mgl64.Translate3D(pos[0], pos[1], pos[2]).Mul4(mgl64.Scale3D(r, r, r)).Mul4(mgl64.HomogRotate3D(-math.Pi/2, mgl64.Vec3{1, 0, 0}))
+		objects[i] = Object{t, textures[i], sphere_vao}
 	}
 
 	dt := 0.0
@@ -114,7 +104,7 @@ func main() {
 	rk4w := numerics.NewRK4Workspace(vn.Size())
 
 	fmt.Println("Compiling Shaders...")
-	program, err := newProgram(vertexShader, fragmentShader)
+	program, err := newProgram(vertexShaderSource, fragmentShaderSource)
 	if err != nil {
 		panic(err)
 	}
@@ -123,34 +113,33 @@ func main() {
 
 	viewU := gl.GetUniformLocation(program, gl.Str("view\x00"))
 
-	projection := mgl64.Perspective(math.Pi/4, float64(width)/float64(height), 0.1, 1.0e12*glCorrectionScale)
+	projection := mgl64.Perspective(math.Pi/4.0, float64(width)/float64(height), 0.1, 1.0e12*glCorrectionScale)
 	camera := Camera{projection, &c.P}
 	scene := Scene{&camera, objects}
 
 	var cpuTime, gpuTime, deltaTime float64
 
-	var info Info
-	info.Position = &c.P.Position
-	info.Inertia = &c.Inertia
-	info.Orientation = &c.P.Orientation
-	info.CpuTime = &cpuTime
-	info.GpuTime = &gpuTime
-	info.DeltaTime = &deltaTime
-	info.Planets = &names
-	info.Locked = &c.Locked
-	info.PlanetIndex = &c.PlanetIndex
+	info := Info{
+		&c.P.Position,
+		&c.Inertia,
+		&c.P.Orientation,
+		&cpuTime,
+		&gpuTime,
+		&deltaTime,
+		&names,
+		&c.Locked,
+		&c.PlanetIndex,
+	}
 
-	gl.Enable(gl.DEPTH_TEST)
-	gl.DepthFunc(gl.LESS)
 	i := 0
 	for ; !window.ShouldClose(); i++ {
+		t := glfw.GetTime()
+
 		if i%fpsTarget == 0 {
 			i = 0
 			info.Print()
 		}
 
-		deltaTime = glfw.GetTime()
-		cpuTime = deltaTime
 		// static behaviour
 		numerics.RK4(rk4w, dParticleSystem, dt, y, y)
 		particles = VecNToParticles(vn)
@@ -159,23 +148,22 @@ func main() {
 
 		gl.ClearColor(0, 0, 0, 1)
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-
 		for i := range scene.Os {
 			pos := particles[i].Position.Mul(glCorrectionScale)
 			r := radii[i] * 10 * glCorrectionScale
 			scene.Os[i].Transform = mgl64.Translate3D(pos[0], pos[1], pos[2]).Mul4(mgl64.Scale3D(r, r, r).Mul4(mgl64.HomogRotate3D(-math.Pi/2, mgl64.Vec3{1, 0, 0})))
 		}
 
-		gpuTime = glfw.GetTime()
-		cpuTime = gpuTime - cpuTime
+		cpuTime = glfw.GetTime() - t
 
 		scene.Draw(viewU)
 		window.SwapBuffers()
-		gpuTime = glfw.GetTime() - gpuTime
+		gpuTime = glfw.GetTime() - (t + cpuTime)
 
-		sleepTime := 1.0/fpsTarget - (cpuTime + gpuTime)
-		time.Sleep(time.Duration(sleepTime) * time.Second)
-		deltaTime = glfw.GetTime() - deltaTime
+		sleepTime := time.Duration(int64(1000.0/float64(fpsTarget)-(cpuTime+gpuTime))) * time.Millisecond
+
+		time.Sleep(sleepTime)
+		deltaTime = glfw.GetTime() - t
 	}
 	fmt.Print("\n")
 }
@@ -238,7 +226,7 @@ func compileShader(source string, shaderType uint32) (uint32, error) {
 	return shader, nil
 }
 
-var vertexShader = /*`
+var vertexShaderSource = /*`
 #version 330 core
 layout (location = 0) in vec3 vert;
 
@@ -265,7 +253,7 @@ void main() {
 }
 ` + "\x00"
 
-var fragmentShader = `
+var fragmentShaderSource = `
 #version 410 core
 out vec4 outputColor;
 in vec2 texcoord;
