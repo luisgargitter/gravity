@@ -12,6 +12,7 @@ import (
 	"github.com/go-gl/gl/v2.1/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
 	"github.com/go-gl/mathgl/mgl64"
+	//"github.com/luisgargitter/numerics"
 )
 
 const mouse_sensi = 0.0005
@@ -71,6 +72,7 @@ func loadSphere() VAO {
 }
 
 func main() {
+
 	fmt.Println("Initialization...")
 	window := glfw_setup()
 	defer glfw.Terminate()
@@ -140,8 +142,8 @@ func main() {
 	gl.Enable(gl.DEPTH_TEST)
 	gl.DepthFunc(gl.LESS)
 	i := 0
-	for ;!window.ShouldClose(); i++ {
-		if i % fpsTarget == 0 {
+	for ; !window.ShouldClose(); i++ {
+		if i%fpsTarget == 0 {
 			i = 0
 			info.Print()
 		}
@@ -149,8 +151,8 @@ func main() {
 		deltaTime = glfw.GetTime()
 		cpuTime = deltaTime
 		// static behaviour
-			s.Step()
-		
+		s.Step()
+
 		c.Handle(&s)
 
 		gl.ClearColor(0, 0, 0, 1)
