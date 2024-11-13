@@ -46,7 +46,7 @@ type Controls struct {
 	Window       glfw.Window
 	Mouse        mgl64.Vec2
 	P            Pov
-	Inertia      mgl64.Vec3
+	Velocity     mgl64.Vec3
 	Acceleration float64
 	Resistance   float64
 	Locked       bool
@@ -79,36 +79,37 @@ func (c *Controls) Handle(particles []Particle, dt float64) {
 	lock := c.Window.GetKey(glfw.KeyTab)
 	stop := c.Window.GetKey(glfw.KeyL)
 
+	dV := c.Acceleration
 	if sw == glfw.Press {
-		c.Inertia[2] += c.Acceleration
+		c.Velocity[2] += dV
 	}
 	if ss == glfw.Press {
-		c.Inertia[2] -= c.Acceleration
+		c.Velocity[2] -= dV
 	}
 	if sd == glfw.Press {
-		c.Inertia[0] += c.Acceleration
+		c.Velocity[0] += dV
 	}
 	if sa == glfw.Press {
-		c.Inertia[0] -= c.Acceleration
+		c.Velocity[0] -= dV
 	}
 	if up == glfw.Press {
-		c.Inertia[1] += c.Acceleration
+		c.Velocity[1] += dV
 	}
 	if down == glfw.Press {
-		c.Inertia[1] -= c.Acceleration
+		c.Velocity[1] -= dV
 	}
 	if q == glfw.Press {
 		c.Window.SetShouldClose(true)
 	}
 	if stop == glfw.Press {
-		c.Inertia = c.Inertia.Mul(0)
+		c.Velocity = mgl64.Vec3{0, 0, 0}
 	}
 
 	if lock == glfw.Press {
 		c.Locked = true
 		planet := particles[c.PlanetIndex]
 
-		c.P.FreeMove(c.Inertia)
+		c.P.FreeMove(c.Velocity.Mul(dt))
 		c.P.Position = c.P.Position.Add(planet.Velocity.Mul(dt))
 
 		t := c.P.Position.Sub(planet.Position)
@@ -117,7 +118,7 @@ func (c *Controls) Handle(particles []Particle, dt float64) {
 		c.P.Orientation = mgl64.Vec3{theta - math.Pi/2, -phi + math.Pi/2, 0}
 
 	} else {
-		c.P.FPSMove(c.Inertia)
+		c.P.FPSMove(c.Velocity.Mul(dt))
 		c.P.FPSLook(c.Mouse.Sub(mouse).Mul(mouse_sensi))
 	}
 	if lock == glfw.Release && c.Locked {
@@ -125,6 +126,6 @@ func (c *Controls) Handle(particles []Particle, dt float64) {
 		c.PlanetIndex = (c.PlanetIndex + 1) % len(particles)
 	}
 
-	c.Inertia = c.Inertia.Mul(c.Resistance) // for smooth movement (Kondensator-Ladekurve)
+	c.Velocity = c.Velocity.Mul(c.Resistance) // for smooth movement (Kondensator-Ladekurve)
 	c.Mouse = mouse
 }

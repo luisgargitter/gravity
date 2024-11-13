@@ -76,20 +76,19 @@ func main() {
 	var c Controls
 	c.Window = *window
 	c.P = p
-	c.Inertia = mgl64.Vec3{0, 0, 0}
-	c.Acceleration = 100000
+	c.Velocity = mgl64.Vec3{0, 0, 0}
+	c.Acceleration = 1000
 	c.Resistance = 1.0
 	c.PlanetIndex = 3
 	c.Setup()
 
 	sphere_vao := loadSphere(5, 1.0)
 
-	sphere_vao := loadSphere()
-
 	fmt.Println("Loading Planetary System...")
 	particles, radii, textures, names := constructSystem("solar_system.toml")
 	fmt.Println("Planetary System Loaded.")
 
+	objects := make([]Object, len(particles))
 	for i := range particles {
 		pos := particles[i].Position.Mul(glCorrectionScale)
 		r := radii[i] * 10 * glCorrectionScale
@@ -97,11 +96,10 @@ func main() {
 		objects[i] = Object{t, textures[i], sphere_vao}
 	}
 
-	dt := 0.0
+	dt := 1000.0
 
-	vn := ParticlesToVecN(particles)
-	y := mgl64.NewVecN(vn.Size())
-	rk4w := numerics.NewRK4Workspace(vn.Size())
+	y := ParticlesToVecN(particles)
+	rk4w := numerics.NewRK4Workspace(y.Size())
 
 	fmt.Println("Compiling Shaders...")
 	program, err := newProgram(vertexShaderSource, fragmentShaderSource)
@@ -121,7 +119,7 @@ func main() {
 
 	info := Info{
 		&c.P.Position,
-		&c.Inertia,
+		&c.Velocity,
 		&c.P.Orientation,
 		&cpuTime,
 		&gpuTime,
@@ -142,7 +140,7 @@ func main() {
 
 		// static behaviour
 		numerics.RK4(rk4w, dParticleSystem, dt, y, y)
-		particles = VecNToParticles(vn)
+		particles = VecNToParticles(y)
 
 		c.Handle(particles, dt)
 

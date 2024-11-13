@@ -31,7 +31,7 @@ func constructSystem(filepath string) ([]Particle, []float64, []uint32, []string
 	var textures []uint32
 	var names []string
 	for i, b := range c.Bodies {
-		t := Particle{mgl64.Vec3{b.Distance, 0, 0}, mgl64.Vec3{0, 0, b.Speed*b.Mass}, b.Mass, 0}
+		t := Particle{mgl64.Vec3{b.Distance, 0, 0}, mgl64.Vec3{0, 0, b.Speed}, b.Mass, 0}
 		rp = append(rp, t)
 		rr = append(rr, b.Diameter/2)
 		text, err := newTexture("textures/" + b.Texture)
