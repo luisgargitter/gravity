@@ -3,23 +3,26 @@ package main
 import (
 	"github.com/go-gl/gl/v2.1/gl"
 	"github.com/go-gl/mathgl/mgl32"
-	"github.com/go-gl/mathgl/mgl64"
 )
 
 type Trail struct {
-	Position *mgl64.Vec3
+	Position *mgl32.Vec3
 	Length   int
 	Width    float32
 	Color    mgl32.Vec3
 	Curve    []mgl32.Vec3
 }
 
-func (t *Trail) Update(scale float64) {
-	p := (*t.Position).Mul(scale)
-	t.Curve = append(t.Curve, mgl32.Vec3{float32(p[0]), float32(p[1]), float32(p[2])})
-	if len(t.Curve) > t.Length {
-		t.Curve = t.Curve[1:]
+func NewTrail(position *mgl32.Vec3, length int, width float32, color mgl32.Vec3) *Trail {
+	return &Trail{position, length, width, color, make([]mgl32.Vec3, length)}
+}
+
+func (t *Trail) Update() {
+	p := *t.Position
+	for i := 0; i < len(t.Curve)-1; i++ {
+		t.Curve[i+1] = t.Curve[i]
 	}
+	t.Curve[0] = p
 }
 
 func (t *Trail) Draw() {

@@ -12,6 +12,8 @@ import (
 	"github.com/go-gl/gl/v2.1/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
 	"github.com/go-gl/mathgl/mgl64"
+
+	"github.com/luisgargitter/numerics"
 )
 
 const mouse_sensi = 0.0005
@@ -82,19 +84,24 @@ func main() {
 
 	sphere_vao := loadSphere(5, 1.0)
 
+	sphere_vao := loadSphere()
+
 	fmt.Println("Loading Planetary System...")
-	points, radii, textures, names := constructSystem("solar_system.toml")
+	particles, radii, textures, names := constructSystem("solar_system.toml")
 	fmt.Println("Planetary System Loaded.")
 
-	s := Simulation{100.0, points}
-
-	objects := make([]Object, len(s.Points))
-	for i := range s.Points {
-		pos := s.Points[i].Position.Mul(glCorrectionScale)
+	for i := range particles {
+		pos := particles[i].Position.Mul(glCorrectionScale)
 		r := radii[i] * 10 * glCorrectionScale
 		t := mgl64.Translate3D(pos[0], pos[1], pos[2]).Mul4(mgl64.Scale3D(r, r, r)).Mul4(mgl64.HomogRotate3D(-math.Pi/2, mgl64.Vec3{1, 0, 0}))
 		objects[i] = Object{t, textures[i], sphere_vao}
 	}
+
+	dt := 0.0
+
+	vn := ParticlesToVecN(particles)
+	y := mgl64.NewVecN(vn.Size())
+	rk4w := numerics.NewRK4Workspace(vn.Size())
 
 	fmt.Println("Compiling Shaders...")
 	program, err := newProgram(vertexShaderSource, fragmentShaderSource)
@@ -134,14 +141,15 @@ func main() {
 		}
 
 		// static behaviour
-		s.Step()
+		numerics.RK4(rk4w, dParticleSystem, dt, y, y)
+		particles = VecNToParticles(vn)
 
-		c.Handle(&s)
+		c.Handle(particles, dt)
 
 		gl.ClearColor(0, 0, 0, 1)
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 		for i := range scene.Os {
-			pos := s.Points[i].Position.Mul(glCorrectionScale)
+			pos := particles[i].Position.Mul(glCorrectionScale)
 			r := radii[i] * 10 * glCorrectionScale
 			scene.Os[i].Transform = mgl64.Translate3D(pos[0], pos[1], pos[2]).Mul4(mgl64.Scale3D(r, r, r).Mul4(mgl64.HomogRotate3D(-math.Pi/2, mgl64.Vec3{1, 0, 0})))
 		}
