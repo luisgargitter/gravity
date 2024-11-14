@@ -43,7 +43,7 @@ func glfw_setup() *glfw.Window {
 	}
 
 	window.MakeContextCurrent()
-	glfw.SwapInterval(0) // for controlling framerate
+	glfw.SwapInterval(1) // vsync (set to zero for unlimited framerate
 
 	if err := gl.Init(); err != nil {
 		log.Fatalln("failed to initialize OpenGL", err)
@@ -96,7 +96,7 @@ func main() {
 		objects[i] = Object{t, textures[i], sphere_vao}
 	}
 
-	dt := 1000.0
+	timeScale := 1000.0
 
 	y := ParticlesToVecN(particles)
 	rk4w := numerics.NewRK4Workspace(y.Size())
@@ -139,10 +139,10 @@ func main() {
 		}
 
 		// static behaviour
-		numerics.RK4(rk4w, dParticleSystem, dt, y, y)
+		numerics.RK4(rk4w, dParticleSystem, deltaTime*timeScale, y, y)
 		particles = VecNToParticles(y)
 
-		c.Handle(particles, dt)
+		c.Handle(particles, deltaTime*timeScale)
 
 		gl.ClearColor(0, 0, 0, 1)
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
@@ -158,9 +158,9 @@ func main() {
 		window.SwapBuffers()
 		gpuTime = glfw.GetTime() - (t + cpuTime)
 
-		sleepTime := time.Duration(int64(1000.0/float64(fpsTarget)-(cpuTime+gpuTime))) * time.Millisecond
+		sleepTime := 1.0/fpsTarget - (cpuTime + gpuTime)
 
-		time.Sleep(sleepTime)
+		time.Sleep(time.Duration(1000.0*sleepTime) * time.Millisecond)
 		deltaTime = glfw.GetTime() - t
 	}
 	fmt.Print("\n")
