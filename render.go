@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/go-gl/mathgl/mgl32"
 	"image"
 	"image/draw"
 	_ "image/jpeg"
@@ -157,8 +158,7 @@ func (c *Camera) ViewMatrix() mgl64.Mat4 {
 
 func (s *Scene) Draw(viewUni int32) {
 	m := s.C.ViewMatrix()
-	var t [4 * 4]float32
-	d := t[:]
+	d := make([]float32, len(mgl32.Mat4{}))
 	for _, o := range s.Os {
 		mo := m.Mul4(o.Transform)
 		Arrayf64Tof32(mo[:], &d)

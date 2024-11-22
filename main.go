@@ -236,7 +236,7 @@ void main()
 */
 
 `
-#version 410
+#version 330
 
 uniform mat4 view;
 
@@ -252,7 +252,7 @@ void main() {
 ` + "\x00"
 
 var fragmentShaderSource = `
-#version 410 core
+#version 330 core
 out vec4 outputColor;
 in vec2 texcoord;
 
