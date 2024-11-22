@@ -12,16 +12,6 @@ const (
 	stride       = offsetCharge + 1
 )
 
-func VecNGetVec3(vn *mgl64.VecN, i int) mgl64.Vec3 {
-	raw := vn.Raw()
-	return mgl64.Vec3{raw[i+0], raw[i+1], raw[i+2]}
-}
-
-func VecNSetVec3(vn *mgl64.VecN, i int, v mgl64.Vec3) {
-	raw := vn.Raw()
-	raw[i+0], raw[i+1], raw[i+2] = v[0], v[1], v[2]
-}
-
 func VecNSetParticle(vn *mgl64.VecN, i int, p *Particle) {
 	VecNSetVec3(vn, i+offsetPos, p.Position)
 	VecNSetVec3(vn, i+offsetVel, p.Velocity)

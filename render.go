@@ -41,7 +41,7 @@ type Object struct {
 
 func ConstructVBO(vertices []mgl64.Vec3, uvcoords []mgl64.Vec2) VBO {
 	if len(vertices) != len(uvcoords) {
-		log.Fatal("mismatch in amount of vertives and uvcoords")
+		log.Fatal("mismatch in amount of vertices and uvcoords")
 	}
 
 	var r uint32
