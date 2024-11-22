@@ -238,7 +238,7 @@ void main()
 `
 #version 410
 
-uniform dmat4 view;
+uniform mat4 view;
 
 in vec3 vert;
 in vec2 uv;

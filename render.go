@@ -45,10 +45,15 @@ func ConstructVBO(vertices []mgl64.Vec3, uvcoords []mgl64.Vec2) VBO {
 	}
 
 	var r uint32
-	a := make([][5]float64, len(uvcoords))
-	for i, uv := range uvcoords {
-		v := vertices[i]
-		a[i] = [5]float64{v[0], v[1], v[2], uv[0], uv[1]}
+	a := make([][5]float32, len(uvcoords))
+	fv := make([]float32, len(vertices[0]))
+	fuv := make([]float32, len(uvcoords[0]))
+	for i := range vertices {
+		dv := vertices[i][:]
+		Arrayf64Tof32(dv, &fv)
+		duv := uvcoords[i][:]
+		Arrayf64Tof32(duv, &fuv)
+		a[i] = [5]float32{fv[0], fv[1], fv[2], fuv[0], fuv[1]}
 	}
 
 	gl.GenBuffers(1, &r)
@@ -85,8 +90,8 @@ func ConstructVAO(vbo VBO, ebo EBO) VAO {
 	gl.BindBuffer(gl.ARRAY_BUFFER, uint32(vbo))
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo.ebo)
 
-	gl.VertexAttribPointer(0, 3, gl.DOUBLE, false, int32(unsafe.Sizeof([5]float64{})), nil)
-	gl.VertexAttribPointer(1, 2, gl.DOUBLE, false, int32(unsafe.Sizeof([5]float64{})), unsafe.Pointer(unsafe.Sizeof([3]float64{})))
+	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, int32(unsafe.Sizeof([5]float32{})), nil)
+	gl.VertexAttribPointer(1, 2, gl.FLOAT, false, int32(unsafe.Sizeof([5]float32{})), unsafe.Pointer(unsafe.Sizeof([3]float32{})))
 	gl.EnableVertexAttribArray(0)
 	gl.EnableVertexAttribArray(1)
 
@@ -152,9 +157,12 @@ func (c *Camera) ViewMatrix() mgl64.Mat4 {
 
 func (s *Scene) Draw(viewUni int32) {
 	m := s.C.ViewMatrix()
+	var t [4 * 4]float32
+	d := t[:]
 	for _, o := range s.Os {
-		t := m.Mul4(o.Transform)
-		gl.UniformMatrix4dv(viewUni, 1, false, &t[0])
+		mo := m.Mul4(o.Transform)
+		Arrayf64Tof32(mo[:], &d)
+		gl.UniformMatrix4fv(viewUni, 1, false, &d[0])
 
 		gl.ActiveTexture(gl.TEXTURE0)
 		gl.BindTexture(gl.TEXTURE_2D, o.texture)
