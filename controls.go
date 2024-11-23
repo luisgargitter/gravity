@@ -28,12 +28,14 @@ func (p *Pov) FreeMove(delta mgl64.Vec3) {
 	p.Position = p.Position.Add(q.Rotate(delta))
 }
 
+/*
 func (p *Pov) Matrix() mgl64.Mat4 {
 	po := mgl64.Translate3D(p.Position[0]*glCorrectionScale, p.Position[1]*glCorrectionScale, p.Position[2]*glCorrectionScale)
 	or := mgl64.AnglesToQuat(p.Orientation[2], p.Orientation[1], p.Orientation[0], mgl64.ZYX).Mat4()
 
 	return po.Mul4(or).Inv()
 }
+*/
 
 func (p *Pov) FPSMove(delta mgl64.Vec3) {
 	t := p.Orientation
