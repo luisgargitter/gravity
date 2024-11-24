@@ -6,28 +6,24 @@ import (
 
 type ParticleSystem []Particle
 
-const particleStride = particleOffsetCharge + 1
-
-func (p *ParticleSystem) toVecN(d *mgl64.VecN) *mgl64.VecN {
+func (p *ParticleSystem) toVecN(d *mgl64.VecN, i int) *mgl64.VecN {
 	if d == nil || d.Size() < len(*p)*particleStride {
 		d = mgl64.NewVecN(len(*p) * particleStride)
 	}
 
-	for i := range *p {
-		VecNSetParticle(d, i*particleStride, &((*p)[i]))
+	for j := range *p {
+		VecNSetParticle(d, i+j*particleStride, &((*p)[j]))
 	}
 	return d
 }
 
-func (p *ParticleSystem) fromVecN(vn *mgl64.VecN) *ParticleSystem {
-	if len(*p) < vn.Size()/particleStride {
-		*p = make([]Particle, vn.Size()/particleStride)
-	}
+func ParticleSystemfromVecN(vn *mgl64.VecN) *ParticleSystem {
+	p := make(ParticleSystem, vn.Size()/particleStride)
 
-	for i := range *p {
-		(*p)[i] = *VecNGetParticle(vn, i*particleStride)
+	for i := range p {
+		p[i] = *VecNGetParticle(vn, i*particleStride)
 	}
-	return p
+	return &p
 }
 
 func dParticleSystem(y *mgl64.VecN, dy *mgl64.VecN) {

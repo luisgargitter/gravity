@@ -19,12 +19,6 @@ func Arrayf64Tof32(s []float64, d *[]float32) {
 	}
 }
 
-func VecNGetVec3(vn *mgl64.VecN, i int) mgl64.Vec3 {
-	raw := vn.Raw()
-	return mgl64.Vec3{raw[i+0], raw[i+1], raw[i+2]}
-}
-
-func VecNSetVec3(vn *mgl64.VecN, i int, v mgl64.Vec3) {
-	raw := vn.Raw()
-	raw[i+0], raw[i+1], raw[i+2] = v[0], v[1], v[2]
+func triangleNumber(n int) int {
+	return n * (n - 1) / 2
 }

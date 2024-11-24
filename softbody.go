@@ -4,26 +4,33 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 )
 
-type Softbody struct {
-	particles ParticleSystem
-	links     []Link
-}
+type Softbody = SimpleUndirectedGraph[Particle, Link]
 
-const linkStride = 3
+const linkStride = linkOffsetDamper + 1
 
-func (s *Softbody) toVecN(d *mgl64.VecN) *mgl64.VecN {
-	adjacenyTableSize := len(s.particles) * (len(s.particles) - 1) / 2
-	if d == nil || d.Size() < len(s.particles)*particleStride+adjacenyTableSize*linkStride {
-		d = mgl64.NewVecN(len(s.particles)*particleStride + adjacenyTableSize*linkStride)
-	}
-	d = d.Sub(d, d)
-	d = s.particles.toVecN(d)
+const (
+	SoftbodyOffsetVerticesLength = 0
+	SoftbodyOffsetVertices       = 1
+)
 
-	for i := range s.links {
-		j := len(s.particles) * particleStride
-		l := &s.links[i]
-		VecNSetLink(d, j+l.end*len(s.particles)*linkStride+l.start, l)
+func (s *Softbody) toVecN() *mgl64.VecN {
+	size := 1 + len(s.vertices)*particleStride + len(s.edges)*linkStride
+	d := mgl64.NewVecN(size)
+
+	k := ParticleSystem(s.vertices)
+
+	d.Set(SoftbodyOffsetVerticesLength, float64(len(s.vertices)))
+	k.toVecN(d, SoftbodyOffsetVertices)
+
+	startEdges := SoftbodyOffsetVertices + len(s.vertices)*particleStride
+	for i, e := range s.edges {
+		VecNSetLink(d, startEdges+i*linkStride, &e.weight)
 	}
 
 	return d
+}
+
+func SoftbodyFromVecN(vn *mgl64.VecN) *Softbody {
+	p := ParticleSystemfromVecN(vn)
+
 }
