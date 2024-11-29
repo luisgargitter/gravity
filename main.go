@@ -17,7 +17,7 @@ import (
 )
 
 const mouse_sensi = 0.0005
-const width, height = 800, 600
+const width, height = 3200, 2400
 
 const glCorrectionScale = 10e-9
 
@@ -98,7 +98,7 @@ func main() {
 
 	timeScale := 1000.0
 
-	y := ParticlesToVecN(particles)
+	y := particles.toVecN(nil)
 	rk4w := numerics.NewRK4Workspace(y.Size())
 
 	fmt.Println("Compiling Shaders...")
@@ -111,9 +111,8 @@ func main() {
 
 	viewU := gl.GetUniformLocation(program, gl.Str("view\x00"))
 
-	projection := mgl64.Perspective(math.Pi/4.0, float64(width)/float64(height), 0.1, 1.0e12*glCorrectionScale)
-	camera := Camera{projection, &c.P}
-	scene := Scene{&camera, objects}
+	camera := CameraNew(&c.P.Position, &c.P.Orientation, &mgl64.Vec3{0, 0, 1}, math.Pi/4.0, float64(width)/float64(height), 0.1, 1.0e12*glCorrectionScale)
+	scene := Scene{camera, objects}
 
 	var cpuTime, gpuTime, deltaTime float64
 
@@ -140,16 +139,16 @@ func main() {
 
 		// static behaviour
 		numerics.RK4(rk4w, dParticleSystem, deltaTime*timeScale, y, y)
-		particles = VecNToParticles(y)
+		particles = *particles.fromVecN(y)
 
 		c.Handle(particles, deltaTime*timeScale)
 
 		gl.ClearColor(0, 0, 0, 1)
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-		for i := range scene.Os {
+		for i := range scene.objects {
 			pos := particles[i].Position.Mul(glCorrectionScale)
 			r := radii[i] * 10 * glCorrectionScale
-			scene.Os[i].Transform = mgl64.Translate3D(pos[0], pos[1], pos[2]).Mul4(mgl64.Scale3D(r, r, r).Mul4(mgl64.HomogRotate3D(-math.Pi/2, mgl64.Vec3{1, 0, 0})))
+			scene.objects[i].Transform = mgl64.Translate3D(pos[0], pos[1], pos[2]).Mul4(mgl64.Scale3D(r, r, r).Mul4(mgl64.HomogRotate3D(-math.Pi/2, mgl64.Vec3{1, 0, 0})))
 		}
 
 		cpuTime = glfw.GetTime() - t
@@ -236,7 +235,7 @@ void main()
 */
 
 `
-#version 330
+#version 330 core
 
 uniform mat4 view;
 
