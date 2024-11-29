@@ -6,46 +6,47 @@ import (
 
 type ParticleSystem []Particle
 
-func (p *ParticleSystem) toVecN(d *mgl64.VecN, i int) *mgl64.VecN {
-	if d == nil || d.Size() < len(*p)*particleStride {
-		d = mgl64.NewVecN(len(*p) * particleStride)
-	}
-
-	for j := range *p {
-		VecNSetParticle(d, i+j*particleStride, &((*p)[j]))
+func particleSystemAdd(d *ParticleSystem, a *ParticleSystem, b *ParticleSystem) *ParticleSystem {
+	for i := range *a {
+		(*d)[i].Position = (*a)[i].Position.Add((*b)[i].Position)
+		(*d)[i].Velocity = (*a)[i].Velocity.Add((*b)[i].Velocity)
+		(*d)[i].Mass = (*a)[i].Mass + (*b)[i].Mass
+		(*d)[i].Charge = (*a)[i].Charge + (*b)[i].Charge
 	}
 	return d
 }
 
-func ParticleSystemfromVecN(vn *mgl64.VecN) *ParticleSystem {
-	p := make(ParticleSystem, vn.Size()/particleStride)
-
-	for i := range p {
-		p[i] = *VecNGetParticle(vn, i*particleStride)
+func particleSystemMul(d *ParticleSystem, a *ParticleSystem, c float64) *ParticleSystem {
+	for i := range *a {
+		(*d)[i].Position = (*a)[i].Position.Mul(c)
+		(*d)[i].Velocity = (*a)[i].Velocity.Mul(c)
+		(*d)[i].Mass = (*a)[i].Mass * c
+		(*d)[i].Charge = (*a)[i].Charge * c
 	}
-	return &p
+	return d
 }
 
-func dParticleSystem(y *mgl64.VecN, dy *mgl64.VecN) {
-	for i := 0; i < y.Size(); i += particleStride {
-		VecNSetVec3(dy, i+particleOffsetVel, mgl64.Vec3{0, 0, 0})
+func dParticleSystem(y *ParticleSystem, dy *ParticleSystem) {
+	for i := range *dy {
+		(*dy)[i].Velocity = mgl64.Vec3{0, 0, 0}
 	}
-	for i := 0; i < y.Size(); i += particleStride {
-		p1 := VecNGetParticle(y, i)
-		for j := i + particleStride; j < y.Size(); j += particleStride {
-			p2 := VecNGetParticle(y, j)
+
+	for i := range *y {
+		p1 := &(*y)[i]
+		for j := i + 1; j < len(*y); j++ {
+			p2 := &(*y)[j]
 
 			f := p1.GravitationalForceV(p2)
 			fp1 := f.Mul(1.0 / p1.Mass)
 			fp2 := f.Mul(-1.0 / p2.Mass)
 
-			VecNSetVec3(dy, i+particleOffsetVel, fp1.Add(VecNGetVec3(dy, i+particleOffsetVel)))
-			VecNSetVec3(dy, j+particleOffsetVel, fp2.Add(VecNGetVec3(dy, j+particleOffsetVel)))
+			(*dy)[i].Velocity = (*dy)[i].Velocity.Add(fp1)
+			(*dy)[j].Velocity = (*dy)[j].Velocity.Add(fp2)
 		}
 		// change in Position
-		VecNSetVec3(dy, i+particleOffsetPos, VecNGetVec3(y, i+particleOffsetVel))
+		(*dy)[i].Position = (*y)[i].Velocity
 		// ensure mass and charge do not change
-		dy.Set(i+particleOffsetMass, 0)
-		dy.Set(i+particleOffsetCharge, 0)
+		(*dy)[i].Mass = 0
+		(*dy)[i].Charge = 0
 	}
 }

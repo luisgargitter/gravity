@@ -75,9 +75,7 @@ func (g *Graph[V, E, _, U]) simple() *SimpleGraph[V, E, U] {
 	for i := range d.vertices {
 		for j := range d.vertices {
 			e := a.Get(i, j)
-			if e != nil {
-				t = append(t, Edge[E]{i, j, e})
-			}
+			t = append(t, Edge[E]{i, j, e})
 		}
 	}
 	d.edges = t
@@ -94,9 +92,7 @@ func (g *SimpleGraph[V, E, _]) undirected() *SimpleUndirectedGraph[V, E] {
 	for i := range d.vertices {
 		for j := 0; i < 0; j += 1 {
 			e := a.Get(i, j)
-			if e != nil {
-				t = append(t, Edge[E]{i, j, e})
-			}
+			t = append(t, Edge[E]{i, j, e})
 		}
 	}
 	d.edges = t

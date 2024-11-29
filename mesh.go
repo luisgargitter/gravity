@@ -35,8 +35,6 @@ func (m *Mesh) Enhance() {
 			if adj[a][b] == -1 {
 				adj[a][b] = len(m.Vertices)
 				m.Vertices = append(m.Vertices, lerp64(m.Vertices[a], m.Vertices[b], 0.5))
-				//m.Colors = append(m.Colors, lerp32(m.Colors[a], m.Colors[b], 0.5))
-				//m.Colors = append(m.Colors, mgl32.Vec3{rand.Float32(), rand.Float32(), rand.Float32()})
 			}
 			m.Faces[i][j] = uint32(adj[a][b])
 		}

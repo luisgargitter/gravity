@@ -12,12 +12,10 @@ import (
 	"github.com/go-gl/gl/v2.1/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
 	"github.com/go-gl/mathgl/mgl64"
-
-	"github.com/luisgargitter/numerics"
 )
 
 const mouse_sensi = 0.0005
-const width, height = 3200, 2400
+const width, height = 800, 600
 
 const glCorrectionScale = 10e-9
 
@@ -98,8 +96,15 @@ func main() {
 
 	timeScale := 1000.0
 
-	y := particles.toVecN(nil)
-	rk4w := numerics.NewRK4Workspace(y.Size())
+	/* rk4w := numerics.RK4Workspace[ParticleSystem]{
+		Add: particleSystemAdd,
+		Mul: particleSystemMul,
+		D:   make(ParticleSystem, len(particles)),
+		K1:  make(ParticleSystem, len(particles)),
+		K2:  make(ParticleSystem, len(particles)),
+		K3:  make(ParticleSystem, len(particles)),
+		K4:  make(ParticleSystem, len(particles)),
+	} */
 
 	fmt.Println("Compiling Shaders...")
 	program, err := newProgram(vertexShaderSource, fragmentShaderSource)
@@ -138,8 +143,7 @@ func main() {
 		}
 
 		// static behaviour
-		numerics.RK4(rk4w, dParticleSystem, deltaTime*timeScale, y, y)
-		particles = *particles.fromVecN(y)
+		//numerics.RK4(&rk4w, dParticleSystem, 0.0*deltaTime*timeScale, &particles, &particles)
 
 		c.Handle(particles, deltaTime*timeScale)
 
