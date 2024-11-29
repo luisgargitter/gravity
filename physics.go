@@ -17,7 +17,7 @@ type Particle struct {
 	Charge   float64
 }
 
-func (p *Particle) ForceV(a *Particle) mgl64.Vec3 {
+func (p *Particle) GravitationalForceV(a *Particle) mgl64.Vec3 {
 	deltaPosition := a.Position.Sub(p.Position)
 	distanceSquared := deltaPosition.LenSqr()
 	Fg := G * p.Mass * a.Mass / distanceSquared

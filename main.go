@@ -98,8 +98,15 @@ func main() {
 
 	timeScale := 1000.0
 
-	y := ParticlesToVecN(particles)
-	rk4w := numerics.NewRK4Workspace(y.Size())
+	rk4w := numerics.RK4Workspace[ParticleSystem]{
+		particleSystemAdd,
+		particleSystemMul,
+		make(ParticleSystem, len(particles)),
+		make(ParticleSystem, len(particles)),
+		make(ParticleSystem, len(particles)),
+		make(ParticleSystem, len(particles)),
+		make(ParticleSystem, len(particles)),
+	}
 
 	fmt.Println("Compiling Shaders...")
 	program, err := newProgram(vertexShaderSource, fragmentShaderSource)
@@ -139,8 +146,7 @@ func main() {
 		}
 
 		// static behaviour
-		numerics.RK4(rk4w, dParticleSystem, deltaTime*timeScale, y, y)
-		particles = VecNToParticles(y)
+		numerics.RK4(&rk4w, dParticleSystem, deltaTime*timeScale, &particles, &particles)
 
 		c.Handle(particles, deltaTime*timeScale)
 

@@ -4,66 +4,49 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 )
 
-const (
-	offsetPos    = 0
-	offsetVel    = 3
-	offsetMass   = 6
-	offsetCharge = 7
-	stride       = offsetCharge + 1
-)
+type ParticleSystem []Particle
 
-func VecNSetParticle(vn *mgl64.VecN, i int, p *Particle) {
-	VecNSetVec3(vn, i+offsetPos, p.Position)
-	VecNSetVec3(vn, i+offsetVel, p.Velocity)
-	vn.Set(i+offsetMass, p.Mass)
-	vn.Set(i+offsetCharge, p.Charge)
+func particleSystemAdd(d *ParticleSystem, a *ParticleSystem, b *ParticleSystem) *ParticleSystem {
+	for i := range *a {
+		(*d)[i].Position = (*a)[i].Position.Add((*b)[i].Position)
+		(*d)[i].Velocity = (*a)[i].Velocity.Add((*b)[i].Velocity)
+		(*d)[i].Mass = (*a)[i].Mass + (*b)[i].Mass
+		(*d)[i].Charge = (*a)[i].Charge + (*b)[i].Charge
+	}
+	return d
 }
 
-func VecNGetParticle(vn *mgl64.VecN, i int) *Particle {
-	return &Particle{
-		VecNGetVec3(vn, i+offsetPos),
-		VecNGetVec3(vn, i+offsetVel),
-		vn.Get(i + offsetMass),
-		vn.Get(i + offsetCharge),
+func particleSystemMul(d *ParticleSystem, a *ParticleSystem, c float64) *ParticleSystem {
+	for i := range *a {
+		(*d)[i].Position = (*a)[i].Position.Mul(c)
+		(*d)[i].Velocity = (*a)[i].Velocity.Mul(c)
+		(*d)[i].Mass = (*a)[i].Mass * c
+		(*d)[i].Charge = (*a)[i].Charge * c
 	}
+	return d
 }
 
-func ParticlesToVecN(particles []Particle) *mgl64.VecN {
-	vn := mgl64.NewVecN(len(particles) * stride)
-	for i := range particles {
-		VecNSetParticle(vn, i*stride, &particles[i])
+func dParticleSystem(y *ParticleSystem, dy *ParticleSystem) {
+	for i := range *dy {
+		(*dy)[i].Velocity = mgl64.Vec3{0, 0, 0}
 	}
-	return vn
-}
 
-func VecNToParticles(vn *mgl64.VecN) []Particle {
-	particles := make([]Particle, vn.Size()/stride)
-	for i := range particles {
-		particles[i] = *VecNGetParticle(vn, i*stride)
-	}
-	return particles
-}
+	for i := range *y {
+		p1 := &(*y)[i]
+		for j := i + 1; j < len(*y); j++ {
+			p2 := &(*y)[j]
 
-func dParticleSystem(y *mgl64.VecN, dy *mgl64.VecN) {
-	for i := 0; i < y.Size(); i += stride {
-		VecNSetVec3(dy, i+offsetVel, mgl64.Vec3{0, 0, 0})
-	}
-	for i := 0; i < y.Size(); i += stride {
-		p1 := VecNGetParticle(y, i)
-		for j := i + stride; j < y.Size(); j += stride {
-			p2 := VecNGetParticle(y, j)
-
-			f := p1.ForceV(p2)
+			f := p1.GravitationalForceV(p2)
 			fp1 := f.Mul(1.0 / p1.Mass)
 			fp2 := f.Mul(-1.0 / p2.Mass)
 
-			VecNSetVec3(dy, i+offsetVel, fp1.Add(VecNGetVec3(dy, i+offsetVel)))
-			VecNSetVec3(dy, j+offsetVel, fp2.Add(VecNGetVec3(dy, j+offsetVel)))
+			(*dy)[i].Velocity = (*dy)[i].Velocity.Add(fp1)
+			(*dy)[j].Velocity = (*dy)[j].Velocity.Add(fp2)
 		}
 		// change in Position
-		VecNSetVec3(dy, i+offsetPos, VecNGetVec3(y, i+offsetVel))
+		(*dy)[i].Position = (*y)[i].Velocity
 		// ensure mass and charge do not change
-		dy.Set(i+offsetMass, 0)
-		dy.Set(i+offsetCharge, 0)
+		(*dy)[i].Mass = 0
+		(*dy)[i].Charge = 0
 	}
 }

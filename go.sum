@@ -10,3 +10,5 @@ github.com/luisgargitter/numerics v0.0.0-20241113103840-961bbec2fcfb h1:nxGVN4ao
 github.com/luisgargitter/numerics v0.0.0-20241113103840-961bbec2fcfb/go.mod h1:Zwk87gsEYv9eLOF302TMfQXQH4pyxd/dPzj2x4fsvgc=
 github.com/luisgargitter/numerics v0.0.0-20241114172016-31dc8bf0e1f9 h1:pDd/cGcvGVkSdpm5HDsqb1QpCEG16h+8NBoJrHlEjjM=
 github.com/luisgargitter/numerics v0.0.0-20241114172016-31dc8bf0e1f9/go.mod h1:Zwk87gsEYv9eLOF302TMfQXQH4pyxd/dPzj2x4fsvgc=
+github.com/luisgargitter/numerics v0.0.0-20241129174302-883895d79e4f h1:F0UbPWULh6yAquL3WPkHK4m37LEDiWs6kJ33tSGl2Wg=
+github.com/luisgargitter/numerics v0.0.0-20241129174302-883895d79e4f/go.mod h1:Zwk87gsEYv9eLOF302TMfQXQH4pyxd/dPzj2x4fsvgc=

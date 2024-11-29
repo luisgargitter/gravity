@@ -21,7 +21,7 @@ type Config struct {
 	Bodies []Celestialbody
 }
 
-func constructSystem(filepath string) ([]Particle, []float64, []uint32, []string) {
+func constructSystem(filepath string) (ParticleSystem, []float64, []uint32, []string) {
 	var c Config
 	if _, err := toml.DecodeFile(filepath, &c); err != nil {
 		log.Fatal(err)
