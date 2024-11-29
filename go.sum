@@ -10,3 +10,9 @@ github.com/luisgargitter/numerics v0.0.0-20241113103840-961bbec2fcfb h1:nxGVN4ao
 github.com/luisgargitter/numerics v0.0.0-20241113103840-961bbec2fcfb/go.mod h1:Zwk87gsEYv9eLOF302TMfQXQH4pyxd/dPzj2x4fsvgc=
 github.com/luisgargitter/numerics v0.0.0-20241114172016-31dc8bf0e1f9 h1:pDd/cGcvGVkSdpm5HDsqb1QpCEG16h+8NBoJrHlEjjM=
 github.com/luisgargitter/numerics v0.0.0-20241114172016-31dc8bf0e1f9/go.mod h1:Zwk87gsEYv9eLOF302TMfQXQH4pyxd/dPzj2x4fsvgc=
+github.com/luisgargitter/numerics v0.0.0-20241129140416-9496f8f5c05c h1:3n191WIPkpiLnQ2zRKqr6p/o5Il/eFrV/rrLkXqHdeo=
+github.com/luisgargitter/numerics v0.0.0-20241129140416-9496f8f5c05c/go.mod h1:Zwk87gsEYv9eLOF302TMfQXQH4pyxd/dPzj2x4fsvgc=
+github.com/luisgargitter/numerics v0.0.0-20241129161353-5542a78490d5 h1:I09rxbqlzRGwnoSQLkONbY7Q7qTuOi/eVKsp+tFjXAE=
+github.com/luisgargitter/numerics v0.0.0-20241129161353-5542a78490d5/go.mod h1:Zwk87gsEYv9eLOF302TMfQXQH4pyxd/dPzj2x4fsvgc=
+github.com/luisgargitter/numerics v0.0.0-20241129174302-883895d79e4f h1:F0UbPWULh6yAquL3WPkHK4m37LEDiWs6kJ33tSGl2Wg=
+github.com/luisgargitter/numerics v0.0.0-20241129174302-883895d79e4f/go.mod h1:Zwk87gsEYv9eLOF302TMfQXQH4pyxd/dPzj2x4fsvgc=
