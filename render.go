@@ -24,6 +24,11 @@ type VAO struct {
 	count int32
 }
 
+type Camera struct {
+	Projection mgl64.Mat4
+	POV        *Pov
+}
+
 type Scene struct {
 	camera  *Camera
 	objects []Object
@@ -115,7 +120,7 @@ func newTexture(file string) (uint32, error) {
 
 	rgba := image.NewRGBA(img.Bounds())
 	if rgba.Stride != rgba.Rect.Size().X*4 {
-		return 0, fmt.Errorf("unsupported particleStride")
+		return 0, fmt.Errorf("unsupported stride")
 	}
 	draw.Draw(rgba, rgba.Bounds(), img, image.Point{0, 0}, draw.Src)
 
@@ -147,8 +152,12 @@ func (v *VAO) Draw() {
 	gl.BindVertexArray(0)
 }
 
+func (c *Camera) ViewMatrix() mgl64.Mat4 {
+	return c.Projection.Mul4(c.POV.Matrix())
+}
+
 func (s *Scene) Draw(viewUni int32) {
-	m := s.camera.Perspective()
+	m := s.camera.ViewMatrix()
 	d := make([]float32, len(mgl32.Mat4{}))
 	for _, o := range s.objects {
 		mo := m.Mul4(o.Transform)

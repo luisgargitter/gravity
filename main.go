@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/luisgargitter/numerics"
 	_ "image/jpeg"
 	"log"
 	"math"
@@ -15,7 +16,7 @@ import (
 )
 
 const mouse_sensi = 0.0005
-const width, height = 800, 600
+const width, height = 1600, 1200
 
 const glCorrectionScale = 10e-9
 
@@ -96,7 +97,7 @@ func main() {
 
 	timeScale := 1000.0
 
-	/* rk4w := numerics.RK4Workspace[ParticleSystem]{
+	rk4w := numerics.RK4Workspace[ParticleSystem]{
 		Add: particleSystemAdd,
 		Mul: particleSystemMul,
 		D:   make(ParticleSystem, len(particles)),
@@ -104,7 +105,7 @@ func main() {
 		K2:  make(ParticleSystem, len(particles)),
 		K3:  make(ParticleSystem, len(particles)),
 		K4:  make(ParticleSystem, len(particles)),
-	} */
+	}
 
 	fmt.Println("Compiling Shaders...")
 	program, err := newProgram(vertexShaderSource, fragmentShaderSource)
@@ -116,8 +117,9 @@ func main() {
 
 	viewU := gl.GetUniformLocation(program, gl.Str("view\x00"))
 
-	camera := CameraNew(&c.P.Position, &c.P.Orientation, &mgl64.Vec3{0, 0, 1}, math.Pi/4.0, float64(width)/float64(height), 0.1, 1.0e12*glCorrectionScale)
-	scene := Scene{camera, objects}
+	//camera := CameraNew(&c.P.Position, &c.P.Orientation, &mgl64.Vec3{0, 0, 1}, math.Pi/4.0, float64(width)/float64(height), 0.1, 1.0e12*glCorrectionScale)
+	camera := Camera{Projection: mgl64.Perspective(math.Pi/4.0, float64(width)/float64(height), 0.1, 1.0e12*glCorrectionScale), POV: &c.P}
+	scene := Scene{&camera, objects}
 
 	var cpuTime, gpuTime, deltaTime float64
 
@@ -143,7 +145,7 @@ func main() {
 		}
 
 		// static behaviour
-		//numerics.RK4(&rk4w, dParticleSystem, 0.0*deltaTime*timeScale, &particles, &particles)
+		numerics.RK4(&rk4w, dParticleSystem, deltaTime*timeScale, &particles, &particles)
 
 		c.Handle(particles, deltaTime*timeScale)
 
