@@ -51,7 +51,7 @@ func glfw_setup() *glfw.Window {
 	return window
 }
 
-func gl_setup() {
+func gl_setup() int32 {
 	gl.Viewport(0, 0, width, height)
 
 	gl.Enable(gl.CULL_FACE)
@@ -62,13 +62,23 @@ func gl_setup() {
 
 	gl.Enable(gl.DEPTH_TEST)
 	gl.DepthFunc(gl.LESS)
+
+	fmt.Println("Compiling Shaders...")
+	program, err := newProgram(vertexShaderSource, fragmentShaderSource)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("Compilation Done.")
+	gl.UseProgram(program)
+
+	return gl.GetUniformLocation(program, gl.Str("view\x00"))
 }
 
 func main() {
 	fmt.Println("Initialization...")
 	window := glfw_setup()
 	defer glfw.Terminate()
-	gl_setup()
+	viewU := gl_setup()
 
 	p := Pov{mgl64.Vec3{0, 0, 20e9}, mgl64.Vec3{0, 0, 1}, mgl64.Vec3{0, 1, 0}}
 
@@ -106,16 +116,6 @@ func main() {
 		K3:  make(ParticleSystem, len(particles)),
 		K4:  make(ParticleSystem, len(particles)),
 	}
-
-	fmt.Println("Compiling Shaders...")
-	program, err := newProgram(vertexShaderSource, fragmentShaderSource)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("Compilation Done.")
-	gl.UseProgram(program)
-
-	viewU := gl.GetUniformLocation(program, gl.Str("view\x00"))
 
 	camera := Camera{
 		&c.P.Position, &c.P.Orientation, &c.P.Up,

@@ -68,3 +68,10 @@ distance = 4495e9
 speed = 5.43e3
 mass = 1.02e26
 diameter = 49.528e6
+[[bodies]]
+name = "satellite"
+texture = "satellite.jpg"
+distance = 149.7e9
+speed = 40.0e3
+mass = 40
+diameter = 2e6
