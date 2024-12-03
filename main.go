@@ -117,21 +117,20 @@ func main() {
 
 	viewU := gl.GetUniformLocation(program, gl.Str("view\x00"))
 
-	camera2 := CameraNew(&c.P.Position, &c.P.Orientation, &c.P.Up, math.Pi/4.0, float64(width)/float64(height), 1e7, 1.0e12)
-	scene := Scene{camera2, objects}
+	camera := Camera{
+		&c.P.Position, &c.P.Orientation, &c.P.Up,
+		math.Pi / 4.0, float64(width) / float64(height),
+		1e7,
+		1.0e12,
+	}
+	scene := Scene{&camera, objects}
 
 	var cpuTime, gpuTime, deltaTime float64
 
 	info := Info{
-		&c.P.Position,
-		&c.Velocity,
-		&c.P.Orientation,
-		&cpuTime,
-		&gpuTime,
-		&deltaTime,
-		&names,
-		&c.Locked,
-		&c.PlanetIndex,
+		&c.P.Position, &c.Velocity, &c.P.Orientation,
+		&cpuTime, &gpuTime, &deltaTime,
+		&names, &c.Locked, &c.PlanetIndex,
 	}
 
 	i := 0
