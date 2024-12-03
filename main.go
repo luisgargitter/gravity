@@ -57,7 +57,7 @@ func gl_setup() {
 	gl.Enable(gl.CULL_FACE)
 	gl.CullFace(gl.FRONT)
 
-	//gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE) // wireframe
+	//gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINES) // wireframe
 	gl.PolygonMode(gl.BACK, gl.FILL)
 
 	gl.Enable(gl.DEPTH_TEST)
@@ -70,7 +70,7 @@ func main() {
 	defer glfw.Terminate()
 	gl_setup()
 
-	p := Pov{mgl64.Vec3{0, 0, 20e9}, mgl64.Vec3{}}
+	p := Pov{mgl64.Vec3{0, 0, 20e9}, mgl64.Vec3{0, 0, 1}, mgl64.Vec3{0, 1, 0}}
 
 	var c Controls
 	c.Window = *window
@@ -117,9 +117,8 @@ func main() {
 
 	viewU := gl.GetUniformLocation(program, gl.Str("view\x00"))
 
-	//camera := CameraNew(&c.P.Position, &c.P.Orientation, &mgl64.Vec3{0, 0, 1}, math.Pi/4.0, float64(width)/float64(height), 0.1, 1.0e12*glCorrectionScale)
-	camera := Camera{Projection: mgl64.Perspective(math.Pi/4.0, float64(width)/float64(height), 0.1, 1.0e12*glCorrectionScale), POV: &c.P}
-	scene := Scene{&camera, objects}
+	camera2 := CameraNew(&c.P.Position, &c.P.Orientation, &c.P.Up, math.Pi/4.0, float64(width)/float64(height), 1e7, 1.0e12)
+	scene := Scene{camera2, objects}
 
 	var cpuTime, gpuTime, deltaTime float64
 

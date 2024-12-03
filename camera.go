@@ -1,6 +1,7 @@
 package main
 
-/*
+import "github.com/go-gl/mathgl/mgl64"
+
 type Camera struct {
 	position    *mgl64.Vec3
 	orientation *mgl64.Vec3
@@ -16,6 +17,5 @@ func CameraNew(position *mgl64.Vec3, orientation *mgl64.Vec3, up *mgl64.Vec3, fo
 }
 
 func (c *Camera) Perspective() mgl64.Mat4 {
-	return mgl64.Perspective(c.fovY, c.aspect, c.near, c.far).Mul4(mgl64.LookAtV(*c.position, c.position.Add(*c.orientation), *c.up))
+	return mgl64.Perspective(c.fovY, c.aspect, c.near*glCorrectionScale, c.far*glCorrectionScale).Mul4(mgl64.LookAtV(c.position.Mul(glCorrectionScale), c.position.Mul(glCorrectionScale).Add(*c.orientation), *c.up))
 }
-*/

@@ -24,11 +24,6 @@ type VAO struct {
 	count int32
 }
 
-type Camera struct {
-	Projection mgl64.Mat4
-	POV        *Pov
-}
-
 type Scene struct {
 	camera  *Camera
 	objects []Object
@@ -152,12 +147,8 @@ func (v *VAO) Draw() {
 	gl.BindVertexArray(0)
 }
 
-func (c *Camera) ViewMatrix() mgl64.Mat4 {
-	return c.Projection.Mul4(c.POV.Matrix())
-}
-
 func (s *Scene) Draw(viewUni int32) {
-	m := s.camera.ViewMatrix()
+	m := s.camera.Perspective()
 	d := make([]float32, len(mgl32.Mat4{}))
 	for _, o := range s.objects {
 		mo := m.Mul4(o.Transform)

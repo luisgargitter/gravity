@@ -1,45 +1,37 @@
 package main
 
 import (
-	"log"
-	"math"
-
 	"github.com/go-gl/glfw/v3.3/glfw"
 	"github.com/go-gl/mathgl/mgl64"
+	"log"
 )
 
 type Pov struct {
 	Position    mgl64.Vec3
 	Orientation mgl64.Vec3
+	Up          mgl64.Vec3
 }
 
 func (p *Pov) FPSLook(delta mgl64.Vec2) {
-	p.Orientation[1] += delta[0]
-	p.Orientation[0] += delta[1]
-
-	p.Orientation[1] = math.Mod(p.Orientation[1], 2*math.Pi)
-	p.Orientation[0] = mgl64.Clamp(p.Orientation[0], -math.Pi/2, math.Pi/2)
+	qx := mgl64.QuatRotate(delta[0], p.Up)
+	qy := mgl64.QuatRotate(delta[1], p.Orientation.Cross(p.Up))
+	p.Orientation = qx.Mul(qy).Rotate(p.Orientation)
 }
 
 func (p *Pov) FreeMove(delta mgl64.Vec3) {
-	delta[2] = -delta[2] // OpenGL uses a right hand coordinate system.
-	// To associate +z with forward movement we need to invert it.
-	q := mgl64.AnglesToQuat(p.Orientation[2], p.Orientation[1], p.Orientation[0], mgl64.ZYX)
-	p.Position = p.Position.Add(q.Rotate(delta))
-}
-
-func (p *Pov) Matrix() mgl64.Mat4 {
-	po := mgl64.Translate3D(p.Position[0]*glCorrectionScale, p.Position[1]*glCorrectionScale, p.Position[2]*glCorrectionScale)
-	or := mgl64.AnglesToQuat(p.Orientation[2], p.Orientation[1], p.Orientation[0], mgl64.ZYX).Mat4()
-
-	return po.Mul4(or).Inv()
+	oz := p.Orientation
+	ox := p.Orientation.Cross(p.Up)
+	oy := ox.Cross(p.Orientation)
+	om := mgl64.Mat3FromCols(ox, oy, oz)
+	p.Position = p.Position.Add(om.Mul3x1(delta)) // for now
 }
 
 func (p *Pov) FPSMove(delta mgl64.Vec3) {
-	t := p.Orientation
-	p.Orientation = mgl64.Vec3{0, p.Orientation[1], 0}
-	p.FreeMove(delta)
-	p.Orientation = t
+	ox := p.Orientation.Cross(p.Up)
+	oy := p.Up
+	oz := oy.Cross(ox)
+	om := mgl64.Mat3FromCols(ox, oy, oz)
+	p.Position = p.Position.Add(om.Mul3x1(delta)) // for now
 }
 
 type Controls struct {
@@ -112,10 +104,7 @@ func (c *Controls) Handle(particles []Particle, dt float64) {
 		c.P.FreeMove(c.Velocity.Mul(dt))
 		c.P.Position = c.P.Position.Add(planet.Velocity.Mul(dt))
 
-		t := c.P.Position.Sub(planet.Position)
-		_, theta, phi := mgl64.CartesianToSpherical(mgl64.Vec3{t[0], t[2], t[1]})
-
-		c.P.Orientation = mgl64.Vec3{theta - math.Pi/2, -phi + math.Pi/2, 0}
+		c.P.Orientation = planet.Position.Sub(c.P.Position).Normalize()
 
 	} else {
 		c.P.FPSMove(c.Velocity.Mul(dt))
