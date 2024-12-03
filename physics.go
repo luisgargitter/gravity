@@ -17,10 +17,40 @@ type Particle struct {
 	Charge   float64
 }
 
+func particleAdd(d, a, b *Particle) *Particle {
+	d.Position = a.Position.Add(b.Position)
+	d.Velocity = a.Velocity.Add(b.Velocity)
+	d.Mass = a.Mass + b.Mass
+	d.Charge = a.Charge + b.Charge
+	return d
+}
+
+func particleMul(d, a *Particle, c float64) *Particle {
+	d.Position = a.Position.Mul(c)
+	d.Velocity = a.Velocity.Mul(c)
+	d.Mass = a.Mass * c
+	d.Charge = a.Charge * c
+	return d
+}
+
 type Link struct {
 	length         float64
 	springConstant float64
 	damperConstant float64
+}
+
+func linkAdd(d, a, b *Link) *Link {
+	d.length = a.length + b.length
+	d.springConstant = a.springConstant + b.springConstant
+	d.damperConstant = a.damperConstant + b.damperConstant
+	return d
+}
+
+func linkMul(d, a *Link, c float64) *Link {
+	d.length = a.length * c
+	d.springConstant = a.springConstant * c
+	d.damperConstant = a.damperConstant * c
+	return d
 }
 
 func (p *Particle) GravitationalForceV(a *Particle) mgl64.Vec3 {

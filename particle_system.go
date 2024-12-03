@@ -8,20 +8,14 @@ type ParticleSystem []Particle
 
 func particleSystemAdd(d *ParticleSystem, a *ParticleSystem, b *ParticleSystem) *ParticleSystem {
 	for i := range *a {
-		(*d)[i].Position = (*a)[i].Position.Add((*b)[i].Position)
-		(*d)[i].Velocity = (*a)[i].Velocity.Add((*b)[i].Velocity)
-		(*d)[i].Mass = (*a)[i].Mass + (*b)[i].Mass
-		(*d)[i].Charge = (*a)[i].Charge + (*b)[i].Charge
+		particleAdd(&(*d)[i], &(*a)[i], &(*b)[i])
 	}
 	return d
 }
 
 func particleSystemMul(d *ParticleSystem, a *ParticleSystem, c float64) *ParticleSystem {
 	for i := range *a {
-		(*d)[i].Position = (*a)[i].Position.Mul(c)
-		(*d)[i].Velocity = (*a)[i].Velocity.Mul(c)
-		(*d)[i].Mass = (*a)[i].Mass * c
-		(*d)[i].Charge = (*a)[i].Charge * c
+		particleMul(&(*d)[i], &(*a)[i], c)
 	}
 	return d
 }
