@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/go-gl/glfw/v3.3/glfw"
 	"github.com/go-gl/mathgl/mgl32"
 	"image"
 	"image/draw"
@@ -13,6 +14,63 @@ import (
 	"github.com/go-gl/gl/v2.1/gl"
 	"github.com/go-gl/mathgl/mgl64"
 )
+
+type Renderer struct {
+	win     *glfw.Window
+	width   int
+	height  int
+	viewUni int32
+}
+
+func InitRenderer(width, height int) *Renderer {
+	var r Renderer
+	r.width = width
+	r.height = height
+
+	glfw.WindowHint(glfw.Resizable, glfw.False)
+	glfw.WindowHint(glfw.ContextVersionMajor, 2)
+	glfw.WindowHint(glfw.ContextVersionMinor, 1)
+	win, err := glfw.CreateWindow(width, height, "Render", nil, nil)
+	if err != nil {
+		log.Fatalln("failed to create renderWindow:", err)
+	}
+	r.win = win
+
+	r.win.MakeContextCurrent()
+	glfw.SwapInterval(1) // vsync (set to zero for unlimited framerate
+
+	err = gl.Init()
+	if err != nil {
+		log.Fatalln("failed to initialize OpenGL", err)
+	}
+
+	r.glSetup()
+
+	return &r
+}
+
+func (r *Renderer) glSetup() {
+	gl.Viewport(0, 0, int32(r.width), int32(r.height))
+
+	gl.Enable(gl.CULL_FACE)
+	gl.CullFace(gl.FRONT)
+
+	//gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINES) // wireframe
+	gl.PolygonMode(gl.BACK, gl.FILL)
+
+	gl.Enable(gl.DEPTH_TEST)
+	gl.DepthFunc(gl.LESS)
+
+	fmt.Println("Compiling Shaders...")
+	program, err := newProgram(vertexShaderSource, fragmentShaderSource)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("Compilation Done.")
+	gl.UseProgram(program)
+
+	r.viewUni = gl.GetUniformLocation(program, gl.Str("view\x00"))
+}
 
 type VBO uint32
 type EBO struct {

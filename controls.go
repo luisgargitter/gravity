@@ -108,7 +108,7 @@ func (c *Controls) Handle(particles []Particle, dt float64) {
 
 	} else {
 		c.P.FPSMove(c.Velocity.Mul(dt))
-		c.P.FPSLook(c.Mouse.Sub(mouse).Mul(mouse_sensi))
+		c.P.FPSLook(c.Mouse.Sub(mouse).Mul(MouseSensi))
 	}
 	if lock == glfw.Release && c.Locked {
 		c.Locked = false

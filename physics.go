@@ -34,22 +34,22 @@ func particleMul(d, a *Particle, c float64) *Particle {
 }
 
 type Link struct {
-	length         float64
-	springConstant float64
-	damperConstant float64
+	Length         float64
+	SpringConstant float64
+	DamperConstant float64
 }
 
 func linkAdd(d, a, b *Link) *Link {
-	d.length = a.length + b.length
-	d.springConstant = a.springConstant + b.springConstant
-	d.damperConstant = a.damperConstant + b.damperConstant
+	d.Length = a.Length + b.Length
+	d.SpringConstant = a.SpringConstant + b.SpringConstant
+	d.DamperConstant = a.DamperConstant + b.DamperConstant
 	return d
 }
 
 func linkMul(d, a *Link, c float64) *Link {
-	d.length = a.length * c
-	d.springConstant = a.springConstant * c
-	d.damperConstant = a.damperConstant * c
+	d.Length = a.Length * c
+	d.SpringConstant = a.SpringConstant * c
+	d.DamperConstant = a.DamperConstant * c
 	return d
 }
 
@@ -68,13 +68,13 @@ func (p *Particle) GravitationalForceV(a *Particle) mgl64.Vec3 {
 func (p *Particle) DampenedSpringForceV(a *Particle, l *Link) mgl64.Vec3 {
 	deltaPosition := a.Position.Sub(p.Position)
 	distance := deltaPosition.Len()
-	compression := l.length - distance
-	Fs := compression * l.springConstant
+	compression := l.Length - distance
+	Fs := compression * l.SpringConstant
 
 	deltaVelocity := a.Velocity.Sub(p.Velocity)
 	direction := deltaPosition.Mul(1.0 / distance)
 	deltaVelocityAlongLink := deltaVelocity.Dot(direction)
-	Fg := deltaVelocityAlongLink * l.damperConstant
+	Fg := deltaVelocityAlongLink * l.DamperConstant
 	F := Fs - Fg
 
 	return direction.Mul(F)

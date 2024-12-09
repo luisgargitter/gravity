@@ -13,6 +13,10 @@ func lerp32(a, b mgl32.Vec3, t float32) mgl32.Vec3 {
 	return a.Add(b.Sub(a).Mul(t))
 }
 
+func map64(irange mgl64.Vec2, orange mgl64.Vec2, v float64) float64 {
+	return (orange[1]-orange[0])*(v-irange[0])/(irange[1]-irange[0]) + orange[0]
+}
+
 func Arrayf64Tof32(s []float64, d *[]float32) {
 	for i := range s {
 		(*d)[i] = float32(s[i])

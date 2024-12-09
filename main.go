@@ -15,8 +15,15 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 )
 
-const mouse_sensi = 0.0005
-const width, height = 1600, 1200
+const MouseSensi = 0.0005
+const (
+	RenderHeight = 1200
+	RenderWidth  = 1600
+)
+const (
+	PlotHeight = 400
+	PlotWidth  = 600
+)
 
 const glCorrectionScale = 10e-9
 
@@ -27,63 +34,21 @@ func init() {
 	runtime.LockOSThread()
 }
 
-func glfw_setup() *glfw.Window {
+func main() {
+	fmt.Println("Initialization...")
 	if err := glfw.Init(); err != nil {
 		log.Fatalln("failed to initialize glfw:", err)
 	}
-
-	glfw.WindowHint(glfw.Resizable, glfw.False)
-	glfw.WindowHint(glfw.ContextVersionMajor, 2)
-	glfw.WindowHint(glfw.ContextVersionMinor, 1)
-
-	window, err := glfw.CreateWindow(width, height, "Gravity", nil, nil)
-	if err != nil {
-		log.Fatalln("failed to create window:", err)
-	}
-
-	window.MakeContextCurrent()
-	glfw.SwapInterval(1) // vsync (set to zero for unlimited framerate
-
-	if err := gl.Init(); err != nil {
-		log.Fatalln("failed to initialize OpenGL", err)
-	}
-
-	return window
-}
-
-func gl_setup() int32 {
-	gl.Viewport(0, 0, width, height)
-
-	gl.Enable(gl.CULL_FACE)
-	gl.CullFace(gl.FRONT)
-
-	//gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINES) // wireframe
-	gl.PolygonMode(gl.BACK, gl.FILL)
-
-	gl.Enable(gl.DEPTH_TEST)
-	gl.DepthFunc(gl.LESS)
-
-	fmt.Println("Compiling Shaders...")
-	program, err := newProgram(vertexShaderSource, fragmentShaderSource)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("Compilation Done.")
-	gl.UseProgram(program)
-
-	return gl.GetUniformLocation(program, gl.Str("view\x00"))
-}
-
-func main() {
-	fmt.Println("Initialization...")
-	window := glfw_setup()
+	renderer := InitRenderer(RenderWidth, RenderHeight)
+	plotter := InitPlotter(PlotWidth, PlotHeight, 200)
 	defer glfw.Terminate()
-	viewU := gl_setup()
+
+	renderer.win.MakeContextCurrent()
 
 	p := Pov{mgl64.Vec3{0, 0, 20e9}, mgl64.Vec3{0, 0, 1}, mgl64.Vec3{0, 1, 0}}
 
 	var c Controls
-	c.Window = *window
+	c.Window = *renderer.win
 	c.P = p
 	c.Velocity = mgl64.Vec3{0, 0, 0}
 	c.Acceleration = 1000
@@ -104,10 +69,13 @@ func main() {
 		t := mgl64.Translate3D(pos[0], pos[1], pos[2]).Mul4(mgl64.Scale3D(r, r, r)).Mul4(mgl64.HomogRotate3D(-math.Pi/2, mgl64.Vec3{1, 0, 0}))
 		objects[i] = Object{t, textures[i], sphere_vao}
 	}
+	sVerts := []Particle{particles[3], particles[9]}
+	sLinks := []Edge[Link]{Edge[Link]{0, 1, Link{sVerts[0].Position.Sub(sVerts[1].Position).Len() / 2, 100, 0}}}
+	satellite := Softbody{sVerts, sLinks}
 
-	timeScale := 1000.0
+	timeScale := 100000.0
 
-	rk4w := numerics.RK4Workspace[ParticleSystem]{
+	particlesRK4W := numerics.RK4Workspace[ParticleSystem]{
 		Add: particleSystemAdd,
 		Mul: particleSystemMul,
 		D:   make(ParticleSystem, len(particles)),
@@ -117,9 +85,19 @@ func main() {
 		K4:  make(ParticleSystem, len(particles)),
 	}
 
+	satelliteRK4W := numerics.RK4Workspace[Softbody]{
+		Add: softbodyAdd,
+		Mul: softbodyMul,
+		D:   Softbody{make([]Particle, len(satellite.vertices)), make([]Edge[Link], len(satellite.edges))},
+		K1:  Softbody{make([]Particle, len(satellite.vertices)), make([]Edge[Link], len(satellite.edges))},
+		K2:  Softbody{make([]Particle, len(satellite.vertices)), make([]Edge[Link], len(satellite.edges))},
+		K3:  Softbody{make([]Particle, len(satellite.vertices)), make([]Edge[Link], len(satellite.edges))},
+		K4:  Softbody{make([]Particle, len(satellite.vertices)), make([]Edge[Link], len(satellite.edges))},
+	}
+
 	camera := Camera{
 		&c.P.Position, &c.P.Orientation, &c.P.Up,
-		math.Pi / 4.0, float64(width) / float64(height),
+		math.Pi / 4.0, float64(RenderWidth) / float64(RenderHeight),
 		1e7,
 		1.0e12,
 	}
@@ -134,7 +112,7 @@ func main() {
 	}
 
 	i := 0
-	for ; !window.ShouldClose(); i++ {
+	for ; !renderer.win.ShouldClose() && !plotter.win.ShouldClose(); i++ {
 		t := glfw.GetTime()
 
 		if i%fpsTarget == 0 {
@@ -142,8 +120,13 @@ func main() {
 			info.Print()
 		}
 
+		if i%(fpsTarget/6) == 0 {
+			plotter.Update()
+		}
+
 		// static behaviour
-		numerics.RK4(&rk4w, dParticleSystem, deltaTime*timeScale, &particles, &particles)
+		numerics.RK4(&particlesRK4W, dParticleSystem, deltaTime*timeScale, &particles, &particles)
+		numerics.RK4(&satelliteRK4W, dSoftbody, deltaTime*timeScale, &satellite, &satellite)
 
 		c.Handle(particles, deltaTime*timeScale)
 
@@ -157,8 +140,12 @@ func main() {
 
 		cpuTime = glfw.GetTime() - t
 
-		scene.Draw(viewU)
-		window.SwapBuffers()
+		scene.Draw(renderer.viewUni)
+		renderer.win.SwapBuffers()
+
+		plotter.Draw()
+		renderer.win.MakeContextCurrent()
+
 		gpuTime = glfw.GetTime() - (t + cpuTime)
 
 		sleepTime := 1.0/fpsTarget - (cpuTime + gpuTime)
