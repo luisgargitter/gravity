@@ -111,6 +111,13 @@ func main() {
 		&names, &c.Locked, &c.PlanetIndex,
 	}
 
+	earthLastPos := particles[3].Position
+	earthDeltaPos := mgl64.Vec3{}
+	plotDiff := mgl64.Vec3{}
+
+	plotter.Attach(&plotDiff[0])
+	plotter.Attach(&plotDiff[2])
+
 	i := 0
 	for ; !renderer.win.ShouldClose() && !plotter.win.ShouldClose(); i++ {
 		t := glfw.GetTime()
@@ -143,6 +150,9 @@ func main() {
 		scene.Draw(renderer.viewUni)
 		renderer.win.SwapBuffers()
 
+		earthDeltaPos = particles[3].Position.Sub(earthLastPos)
+		earthDeltaPos = particles[3].Position
+		plotDiff = earthDeltaPos.Mul(1 / (deltaTime * timeScale)).Sub(particles[3].Velocity)
 		plotter.Draw()
 		renderer.win.MakeContextCurrent()
 

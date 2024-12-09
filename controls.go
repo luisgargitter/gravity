@@ -105,7 +105,6 @@ func (c *Controls) Handle(particles []Particle, dt float64) {
 		c.P.Position = c.P.Position.Add(planet.Velocity.Mul(dt))
 
 		c.P.Orientation = planet.Position.Sub(c.P.Position).Normalize()
-
 	} else {
 		c.P.FPSMove(c.Velocity.Mul(dt))
 		c.P.FPSLook(c.Mouse.Sub(mouse).Mul(MouseSensi))
