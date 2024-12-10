@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/luisgargitter/numerics"
 	_ "image/jpeg"
 	"log"
 	"math"
@@ -75,7 +74,7 @@ func main() {
 
 	timeScale := 100000.0
 
-	particlesRK4W := numerics.RK4Workspace[ParticleSystem]{
+	particlesRK4W := RK4Workspace[ParticleSystem]{
 		Add: particleSystemAdd,
 		Mul: particleSystemMul,
 		D:   make(ParticleSystem, len(particles)),
@@ -85,7 +84,7 @@ func main() {
 		K4:  make(ParticleSystem, len(particles)),
 	}
 
-	satelliteRK4W := numerics.RK4Workspace[Softbody]{
+	satelliteRK4W := RK4Workspace[Softbody]{
 		Add: softbodyAdd,
 		Mul: softbodyMul,
 		D:   Softbody{make([]Particle, len(satellite.vertices)), make([]Edge[Link], len(satellite.edges))},
@@ -132,8 +131,8 @@ func main() {
 		}
 
 		// static behaviour
-		numerics.RK4(&particlesRK4W, dParticleSystem, deltaTime*timeScale, &particles, &particles)
-		numerics.RK4(&satelliteRK4W, dSoftbody, deltaTime*timeScale, &satellite, &satellite)
+		RK4(&particlesRK4W, dParticleSystem, deltaTime*timeScale, &particles, &particles)
+		RK4(&satelliteRK4W, dSoftbody, deltaTime*timeScale, &satellite, &satellite)
 
 		c.Handle(particles, deltaTime*timeScale)
 
@@ -151,7 +150,7 @@ func main() {
 		renderer.win.SwapBuffers()
 
 		earthDeltaPos = particles[3].Position.Sub(earthLastPos)
-		earthDeltaPos = particles[3].Position
+		earthLastPos = particles[3].Position
 		plotDiff = earthDeltaPos.Mul(1 / (deltaTime * timeScale)).Sub(particles[3].Velocity)
 		plotter.Draw()
 		renderer.win.MakeContextCurrent()
