@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"gravity/physics"
 	"log"
 
 	"github.com/BurntSushi/toml"
@@ -10,7 +10,6 @@ import (
 
 type Celestialbody struct {
 	Name     string
-	Texture  string
 	Distance float64
 	Speed    float64
 	Mass     float64
@@ -21,26 +20,17 @@ type Config struct {
 	Bodies []Celestialbody
 }
 
-func constructSystem(filepath string) (ParticleSystem, []float64, []uint32, []string) {
+func constructSystem(filepath string) (physics.ParticleSystem, []string) {
 	var c Config
 	if _, err := toml.DecodeFile(filepath, &c); err != nil {
 		log.Fatal(err)
 	}
-	var rp ParticleSystem
-	var rr []float64
-	var textures []uint32
+	var rp physics.ParticleSystem
 	var names []string
-	for i, b := range c.Bodies {
-		t := Particle{mgl64.Vec3{b.Distance, 0, 0}, mgl64.Vec3{0, 0, b.Speed}, b.Mass, 0}
+	for _, b := range c.Bodies {
+		t := physics.Particle{Position: mgl64.Vec3{b.Distance, 0, 0}, Velocity: mgl64.Vec3{0, 0, b.Speed}, Mass: b.Mass}
 		rp = append(rp, t)
-		rr = append(rr, b.Diameter/2)
-		text, err := newTexture("textures/" + b.Texture)
-		fmt.Printf("Loading %s (%d/%d)     \r", b.Name, i, len(c.Bodies))
-		if err != nil {
-			log.Fatal(err)
-		}
-		textures = append(textures, text)
 		names = append(names, b.Name)
 	}
-	return rp, rr, textures, names
+	return rp, names
 }

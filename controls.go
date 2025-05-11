@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/go-gl/glfw/v3.3/glfw"
 	"github.com/go-gl/mathgl/mgl64"
+	"gravity/physics"
 	"log"
 )
 
@@ -55,7 +56,7 @@ func (c *Controls) Setup() {
 	c.Mouse[0], c.Mouse[1] = c.Window.GetCursorPos()
 }
 
-func (c *Controls) Handle(particles []Particle, dt float64) {
+func (c *Controls) Handle(particles []physics.Particle, dt float64) {
 	var mouse mgl64.Vec2
 	glfw.PollEvents()
 	// input dependent behaviour

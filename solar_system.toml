@@ -1,76 +1,65 @@
 [[bodies]]
 name = "sun"
-texture = "2k_sun.jpg"
 distance = 0.0
 speed = 0.0
 mass = 1.9891e30
 diameter = 1.3927e9
 [[bodies]]
 name = "mercury"
-texture = "2k_mercury.jpg"
 distance = 58e9
 speed = 47.9e3
 mass = 3.30e23
 diameter = 4.879e6
 [[bodies]]
 name = "venus"
-texture = "2k_venus_surface.jpg"
 distance = 108e9
 speed = 35.0e3
 mass = 4.87e24
 diameter = 12.104e6
 [[bodies]]
 name = "earth"
-texture = "8k_earth_daymap.jpg"
 distance = 149.6e9
 speed = 29.8e3
 mass = 5.97e24
 diameter = 12.756e6
 [[bodies]]
 name = "moon"
-texture = "2k_moon.jpg"
 distance = 149.984e9
 speed = 30.8e3
 mass = 7.3e22
 diameter = 3.475e6
 [[bodies]]
 name = "mars"
-texture = "2k_mars.jpg"
 distance = 228e9
 speed = 24.0e3
 mass = 6.42e23
 diameter = 6.792e6
 [[bodies]]
 name = "jupyter"
-texture = "2k_jupiter.jpg"
 distance = 778e9
 speed = 13.1e3
 mass = 1.90e27
 diameter = 142.984e6
 [[bodies]]
 name = "saturn"
-texture = "2k_saturn.jpg"
 distance = 1433e9
 speed = 9.69e3
 mass = 5.69e26
 diameter = 120.536e6
 [[bodies]]
 name = "uranus"
-texture = "2k_uranus.jpg"
 distance = 2872e9
 speed = 6.81e3
 mass = 5.69e25
 diameter = 51.118e6
 [[bodies]]
 name = "neptune"
-texture = "2k_neptune.jpg"
 distance = 4495e9
 speed = 5.43e3
 mass = 1.02e26
 diameter = 49.528e6
 [[bodies]]
 name = "satellite"
-texture = "satellite.jpg"
 distance = 149.7e9
 speed = 40.0e3
 mass = 40
