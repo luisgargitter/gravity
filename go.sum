@@ -6,13 +6,3 @@ github.com/go-gl/glfw/v3.3/glfw v0.0.0-20240506104042-037f3cc74f2a h1:vxnBhFDDT+
 github.com/go-gl/glfw/v3.3/glfw v0.0.0-20240506104042-037f3cc74f2a/go.mod h1:tQ2UAYgL5IevRw8kRxooKSPJfGvJ9fJQFa0TUsXzTg8=
 github.com/go-gl/mathgl v1.2.0 h1:v2eOj/y1B2afDxF6URV1qCYmo1KW08lAMtTbOn3KXCY=
 github.com/go-gl/mathgl v1.2.0/go.mod h1:pf9+b5J3LFP7iZ4XXaVzZrCle0Q/vNpB/vDe5+3ulRE=
-github.com/luisgargitter/numerics v0.0.0-20241113103840-961bbec2fcfb h1:nxGVN4ao6OYraL0AQhH3RHm8lLyP5KF7+3uP5aGpYQw=
-github.com/luisgargitter/numerics v0.0.0-20241113103840-961bbec2fcfb/go.mod h1:Zwk87gsEYv9eLOF302TMfQXQH4pyxd/dPzj2x4fsvgc=
-github.com/luisgargitter/numerics v0.0.0-20241114172016-31dc8bf0e1f9 h1:pDd/cGcvGVkSdpm5HDsqb1QpCEG16h+8NBoJrHlEjjM=
-github.com/luisgargitter/numerics v0.0.0-20241114172016-31dc8bf0e1f9/go.mod h1:Zwk87gsEYv9eLOF302TMfQXQH4pyxd/dPzj2x4fsvgc=
-github.com/luisgargitter/numerics v0.0.0-20241129140416-9496f8f5c05c h1:3n191WIPkpiLnQ2zRKqr6p/o5Il/eFrV/rrLkXqHdeo=
-github.com/luisgargitter/numerics v0.0.0-20241129140416-9496f8f5c05c/go.mod h1:Zwk87gsEYv9eLOF302TMfQXQH4pyxd/dPzj2x4fsvgc=
-github.com/luisgargitter/numerics v0.0.0-20241129161353-5542a78490d5 h1:I09rxbqlzRGwnoSQLkONbY7Q7qTuOi/eVKsp+tFjXAE=
-github.com/luisgargitter/numerics v0.0.0-20241129161353-5542a78490d5/go.mod h1:Zwk87gsEYv9eLOF302TMfQXQH4pyxd/dPzj2x4fsvgc=
-github.com/luisgargitter/numerics v0.0.0-20241129174302-883895d79e4f h1:F0UbPWULh6yAquL3WPkHK4m37LEDiWs6kJ33tSGl2Wg=
-github.com/luisgargitter/numerics v0.0.0-20241129174302-883895d79e4f/go.mod h1:Zwk87gsEYv9eLOF302TMfQXQH4pyxd/dPzj2x4fsvgc=
